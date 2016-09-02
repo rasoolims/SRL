@@ -41,11 +41,11 @@ public class Pipeline {
         int acMaxBeamSize = Integer.parseInt(args[6]);
         int numOfTrainingIterations = Integer.parseInt(args[7]);
         int adamBatchSize = Integer.parseInt(args[8]);
-        int learnerType = Integer.parseInt(args[9]); //1: ap 2: ll 3:adam
+        int learnerType = Integer.parseInt(args[9]);
         double adamLearningRate = Double.parseDouble(args[10]);
-        boolean decodeOnly = Boolean.parseBoolean(args[12]);
-        boolean greedy = Boolean.parseBoolean(args[13]);
-        int numOfThreads = Integer.parseInt(args[14]);
+        boolean decodeOnly = Boolean.parseBoolean(args[11]);
+        boolean greedy = Boolean.parseBoolean(args[12]);
+        int numOfThreads = Integer.parseInt(args[13]);
         ClassifierType classifierType = ClassifierType.AveragedPerceptron;
         switch (learnerType) {
             case (0):
