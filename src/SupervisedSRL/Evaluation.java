@@ -14,9 +14,7 @@ import java.util.*;
  * Created by monadiab on 7/13/16.
  */
 public class Evaluation {
-
-
-    public static double evaluate(String systemOutput, String goldOutput, 
+    public static double evaluate(String systemOutput, String goldOutput,
                                   HashMap<String, Integer> reverseLabelMap) throws IOException {
         DecimalFormat format = new DecimalFormat("##.00");
 
@@ -95,7 +93,6 @@ public class Evaluation {
         return computePrecisionRecall(aiConfusionMatrix, acConfusionMatrix, reverseLabelMap);
     }
 
-
     private static Object[] compareWithGold(PA pa, HashMap<Integer, String> highestScorePrediction,
                                             int[][] aiConfusionMatrix, HashMap<String, int[]> acConfusionMatrix,
                                             HashMap<String, Integer> reverseLabelMap) {
@@ -151,7 +148,6 @@ public class Evaluation {
         }
         return new Object[]{aiConfusionMatrix, acConfusionMatrix};
     }
-
 
     public static double computePrecisionRecall(int[][] aiConfusionMatrix,
                                                 HashMap<String, int[]> acConfusionMatrix, HashMap<String, Integer> reverseLabelMap) {
@@ -217,7 +213,6 @@ public class Evaluation {
             goldArgMap.put(arg.getIndex(), arg.getType());
         return goldArgMap;
     }
-
 
     private static HashSet<Integer> getNonZeroArgs(HashMap<Integer, String> prediction) {
         HashSet<Integer> nonZeroArgs = new HashSet();

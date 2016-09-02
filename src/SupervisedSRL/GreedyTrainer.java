@@ -104,6 +104,8 @@ public class GreedyTrainer {
         ArrayList<String> dataSet =trainSentencesInCONLLFormat;
         boolean binary = mlpNetwork.getNumOutputs() ==2 ? true: false;
         ArrayList<NeuralTrainingInstance> allInstances = Train.getNextInstances(dataSet, 0, dataSet.size(), mlpNetwork.maps, binary);
+        ArrayList<NeuralTrainingInstance> devInstances = Train.getNextInstances(devSentencesInCONLLFormat, 0, devSentencesInCONLLFormat.size(),
+                                                            mlpNetwork.maps, binary);
         mlpNetwork.maps.constructPreComputeMap(allInstances, mlpNetwork.getNumWordLayers(), 10000);
         mlpNetwork.resetPreComputeMap();
         avgMlpNetwork.resetPreComputeMap();
@@ -133,33 +135,41 @@ public class GreedyTrainer {
             }
 
             if (step % options.trainingOptions.UASEvalPerStep == 0) {
-                // todo evaluate and save if needed
+                if (options.trainingOptions.averagingOption != AveragingOption.ONLY) {
+                    double e = eval(mlpNetwork, devInstances);
+                    System.out.println("accuracy on dev: "+e);
+                    if(e>acc){
+                        System.out.println("Saving with "+e);
+                        acc = e;
+                        saveNetwork(mlpNetwork, modelPath);
+                    }
+                }
+                if (options.trainingOptions.averagingOption != AveragingOption.NO) {
+                    avgMlpNetwork.preCompute();
+                    double e = eval(avgMlpNetwork, devInstances);
+                    System.out.println("accuracy on dev: "+e);
+                    if(e>acc){
+                        System.out.println("Saving with "+e);
+                        acc = e;
+                        saveNetwork(avgMlpNetwork,modelPath);
+                    }
+                }
             }
-        }
-
-        if (options.trainingOptions.averagingOption != AveragingOption.NO) {
-            // averaging
-            double ratio = Math.min(0.9999, (double) step / (9 + step));
-            mlpNetwork.averageNetworks(avgMlpNetwork, 1 - ratio, step == 1 ? 0 : ratio);
-        }
-
-        if (options.trainingOptions.averagingOption != AveragingOption.ONLY) {
-            //todo evaluate and save if needed
-        }
-        if (options.trainingOptions.averagingOption != AveragingOption.NO) {
-            avgMlpNetwork.preCompute();
-            // todo evaluate and save if needed
         }
 
         // if no eval, save the last
         if(acc == Double.NEGATIVE_INFINITY) {
-            FileOutputStream fos = new FileOutputStream(modelPath);
-            GZIPOutputStream gz = new GZIPOutputStream(fos);
-            ObjectOutput writer = new ObjectOutputStream(gz);
-            writer.writeObject(avgMlpNetwork);
-            writer.close();
+            saveNetwork(avgMlpNetwork, modelPath);
         }
         neuralTrainer.shutDownLiveThreads();
+    }
+
+    private static void saveNetwork(MLPNetwork net, String modelPath) throws Exception {
+        FileOutputStream fos = new FileOutputStream(modelPath);
+        GZIPOutputStream gz = new GZIPOutputStream(fos);
+        ObjectOutput writer = new ObjectOutputStream(gz);
+        writer.writeObject(net);
+        writer.close();
     }
 
     private static MLPNetwork constructMlpNetwork(Options options, NNIndexMaps maps, int numOutputs) throws Exception {
@@ -173,4 +183,14 @@ public class GreedyTrainer {
                 options.networkProperties.posPathDim, options.networkProperties.positionDim, numOutputs);
     }
 
+    public static double eval(MLPNetwork network, ArrayList<NeuralTrainingInstance> instances){
+        int all =instances.size();
+        double correct = 0;
+
+        for(NeuralTrainingInstance instance: instances){
+           if(instance.gold()== Utils.argmax(network.output(instance.getFeatures(), instance.getLabel())))
+               correct++;
+        }
+        return correct/all;
+    }
 }
