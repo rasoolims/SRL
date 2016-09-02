@@ -5,6 +5,5 @@ package SupervisedSRL.Strcutures;
  */
 public enum ClassifierType {
     NN,
-    AveragedPerceptron,
-    Adam
+    AveragedPerceptron
 }

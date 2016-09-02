@@ -3,7 +3,6 @@ package SupervisedSRL;
 import SupervisedSRL.Strcutures.ClassifierType;
 import SupervisedSRL.Strcutures.IndexMap;
 import SupervisedSRL.Strcutures.ModelInfo;
-import ml.Adam;
 import ml.AveragedPerceptron;
 
 import java.util.HashMap;
@@ -74,22 +73,6 @@ public class Pipeline {
                             acMaxBeamSize, numOfACFeatures, numOfPDFeatures, modelDir, outputFile, null, ClassifierType.AveragedPerceptron, greedy);
 
                     Evaluation.evaluate(outputFile, devData, indexMap, modelInfo.getClassifier().getReverseLabelMap());
-                } else if (classifierType == ClassifierType.Adam) {
-                    modelPaths = Train.trainJointAdam(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
-                            numOfACFeatures, numOfPDFeatures, adamBatchSize, acMaxBeamSize, adamLearningRate,
-                            greedy, numOfThreads);
-                    ModelInfo modelInfo = new ModelInfo(modelPaths[0], modelPaths[1], ClassifierType.Adam);
-                    IndexMap indexMap = modelInfo.getIndexMap();
-                    Adam classifier = modelInfo.getClassifierAdam();
-                    HashMap<Object, Integer>[] featDict = modelInfo.getFeatDict();
-                    String[] labelMap = classifier.getLabelMap();
-                    HashMap<String, Integer> reverseLabelMap = classifier.getReverseLabelMap();
-                    Decoder.decode(new Decoder(classifier, "joint"),
-                            indexMap, devData, labelMap,
-                            acMaxBeamSize, numOfACFeatures, numOfPDFeatures, modelDir, outputFile, featDict, ClassifierType.Adam, greedy);
-
-                    Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-                    classifier.shutDownLiveThreads();
                 }
             } else {
                 //stacked decoding
@@ -98,7 +81,7 @@ public class Pipeline {
                             numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
                             ClassifierType.NN, greedy, numOfThreads);
 
-                }  else if (classifierType == ClassifierType.AveragedPerceptron) {
+                } else if (classifierType == ClassifierType.AveragedPerceptron) {
                     modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
                             numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
                             ClassifierType.AveragedPerceptron, greedy, numOfThreads);
@@ -117,32 +100,6 @@ public class Pipeline {
                     reverseLabelMap.put("0", reverseLabelMap.size());
                     Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
 
-                } else if (classifierType == ClassifierType.Adam)
-                {
-                    modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
-                            numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
-                            aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate, ClassifierType.Adam, greedy, numOfThreads);
-
-                    ModelInfo aiModelInfo = new ModelInfo(modelPaths[0], modelPaths[1], ClassifierType.Adam);
-                    ModelInfo acModelInfo = new ModelInfo(modelPaths[2], modelPaths[3], ClassifierType.Adam);
-                    Adam aiClassifier = aiModelInfo.getClassifierAdam();
-                    IndexMap indexMap= aiModelInfo.getIndexMap();
-                    HashMap<Object, Integer>[] aiFeatDict = aiModelInfo.getFeatDict();
-                    Adam acClassifier= acModelInfo.getClassifierAdam();
-                    HashMap<Object, Integer>[] acFeatDict = acModelInfo.getFeatDict();
-                    String[] acLabelMap = acClassifier.getLabelMap();
-                    HashMap<String, Integer> acReverseLabelMap = acClassifier.getReverseLabelMap();
-
-                    Decoder.decode(new Decoder(aiClassifier, acClassifier),
-                            indexMap, devData, acLabelMap, aiMaxBeamSize, acMaxBeamSize,
-                            numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
-                            modelDir, outputFile, aiFeatDict, acFeatDict, ClassifierType.Adam, greedy);
-
-                    HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acReverseLabelMap);
-                    reverseLabelMap.put("0", reverseLabelMap.size());
-                    Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-                    aiClassifier.shutDownLiveThreads();
-                    acClassifier.shutDownLiveThreads();
                 }
             }
         } else {
@@ -157,22 +114,7 @@ public class Pipeline {
                             acMaxBeamSize, numOfACFeatures, numOfPDFeatures, modelDir, outputFile, null, ClassifierType.AveragedPerceptron, greedy);
 
                     Evaluation.evaluate(outputFile, devData, indexMap, classifier.getReverseLabelMap());
-                } else if (classifierType == ClassifierType.Adam) {
-                    ModelInfo modelInfo = new ModelInfo(modelDir+"JOINT_adam.model", modelDir+"mappingDicts_adam_JOINT", ClassifierType.Adam);
-                    IndexMap indexMap = modelInfo.getIndexMap();
-                    Adam classifier = modelInfo.getClassifierAdam();
-                    HashMap<Object, Integer>[] featDict = modelInfo.getFeatDict();
-                    String[] labelMap= classifier.getLabelMap();
-                    HashMap<String, Integer> reverseLabelMap = classifier.getReverseLabelMap();
-
-                    Decoder.decode(new Decoder(classifier, "joint"),
-                            indexMap, devData, labelMap,
-                            acMaxBeamSize, numOfACFeatures, numOfPDFeatures, modelDir, outputFile, featDict, ClassifierType.Adam, greedy);
-
-                    Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-                    classifier.shutDownLiveThreads();
                 }
-
             } else {
                 //stacked decoding
                 if (classifierType == ClassifierType.AveragedPerceptron) {
@@ -189,26 +131,6 @@ public class Pipeline {
                     HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acClassifier.getReverseLabelMap());
                     reverseLabelMap.put("0", reverseLabelMap.size());
                     Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-                } else if (classifierType == ClassifierType.Adam) {
-                    ModelInfo aiModelInfo = new ModelInfo(modelDir + "/AI_adam.model", modelDir+"/mappingDicts_adam_AI", ClassifierType.Adam);
-                    ModelInfo acModelInfo = new ModelInfo(modelDir + "/AC_adam.model", modelDir+"/mappingDicts_adam_AC", ClassifierType.Adam);
-                    Adam aiClassifier = aiModelInfo.getClassifierAdam();
-                    IndexMap indexMap= aiModelInfo.getIndexMap();
-                    HashMap<Object, Integer>[] aiFeatDict = aiModelInfo.getFeatDict();
-                    Adam acClassifier= acModelInfo.getClassifierAdam();
-                    HashMap<Object, Integer>[] acFeatDict = acModelInfo.getFeatDict();
-                    String[] acLabelMap = acClassifier.getLabelMap();
-                    HashMap<String, Integer> acReverseLabelMap = acClassifier.getReverseLabelMap();
-                    Decoder.decode(new Decoder(aiClassifier, acClassifier),
-                            indexMap, devData, acLabelMap, aiMaxBeamSize, acMaxBeamSize,
-                            numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
-                            modelDir, outputFile, aiFeatDict, acFeatDict, ClassifierType.Adam, greedy);
-
-                    HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acReverseLabelMap);
-                    reverseLabelMap.put("0", reverseLabelMap.size());
-                    Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-                    aiClassifier.shutDownLiveThreads();
-                    acClassifier.shutDownLiveThreads();
                 }
             }
         }

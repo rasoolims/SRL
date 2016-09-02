@@ -4,7 +4,6 @@ import Sentence.Sentence;
 import SupervisedSRL.Features.FeatureExtractor;
 import SupervisedSRL.PD.PD;
 import SupervisedSRL.Strcutures.*;
-import ml.Adam;
 import ml.AveragedPerceptron;
 import util.IO;
 
@@ -18,8 +17,6 @@ public class Decoder {
 
     AveragedPerceptron aiClassifier; //argument identification (binary classifier)
     AveragedPerceptron acClassifier; //argument classification (multi-class classifier)
-    Adam aiClassifier_adam;
-    Adam acClassifier_adam;
 
     public Decoder(AveragedPerceptron classifier, String state) {
 
@@ -35,20 +32,6 @@ public class Decoder {
 
         this.aiClassifier = aiClassifier;
         this.acClassifier = acClassifier;
-    }
-
-    public Decoder(Adam aiClassifier, Adam acClassifier) {
-        this.aiClassifier_adam = aiClassifier;
-        this.acClassifier_adam = acClassifier;
-    }
-
-    public Decoder(Adam classifier, String state) {
-
-        if (state.equals("AI")) {
-            this.aiClassifier_adam = classifier;
-        } else if (state.equals("AC") || state.equalsIgnoreCase("joint")) {
-            this.acClassifier_adam = classifier;
-        }
     }
 
     ////////////////////////////////// DECODE ////////////////////////////////////////////////////////
@@ -265,18 +248,6 @@ public class Decoder {
                 double[] scores = aiClassifier.score(featVector);
                 score0 = scores[0];
                 score1 = scores[1];
-            }else if (classifierType == ClassifierType.Adam){
-                ArrayList<Integer> feats = new ArrayList<Integer>();
-                for (int d = 0; d < featVector.length; d++)
-                    if (featDict[d].containsKey(featVector[d]))
-                        //seen feature value
-                        feats.add(featDict[d].get(featVector[d]));
-
-                double[] probEstimates = new double[2];
-                int prediction= aiClassifier_adam.argmax(feats,probEstimates, true);
-
-                score0 = Math.log(probEstimates[0]);
-                score1 = Math.log(probEstimates[1]);
             }
 
             // build an intermediate beam
@@ -327,19 +298,6 @@ public class Decoder {
                 double score1 = aiClassifier.score(featVector)[1];
                 if (score1 >= 0)
                     aiCandids.add(wordIdx);
-            } else if (classifierType == ClassifierType.Adam) {
-
-                Object[] featVector = FeatureExtractor.extractAIFeatures(pIdx, wordIdx, sentence, numOfFeatures, indexMap, false, 0);
-                ArrayList<Integer> feats = new ArrayList<Integer>();
-                for (int d = 0; d < featVector.length; d++)
-                    if (featDict[d].containsKey(featVector[d]))
-                        //seen feature value
-                        feats.add(featDict[d].get(featVector[d]));
-
-                double[] probEstimates = new double[2];
-                int prediction = aiClassifier_adam.argmax(feats, probEstimates, true);
-                if (probEstimates[1] > probEstimates[0])
-                    aiCandids.add(wordIdx);
             }
         }
         return aiCandids;
@@ -354,8 +312,6 @@ public class Decoder {
         int numOfLabels = 0;
         if (classifierType== ClassifierType.AveragedPerceptron)
             numOfLabels = acClassifier.getLabelMap().length;
-        else if (classifierType == ClassifierType.Adam)
-            numOfLabels = acClassifier_adam.getLabelMap().length;
 
         ArrayList<ArrayList<Pair<Double, ArrayList<Integer>>>> finalACCandidates = new ArrayList<ArrayList<Pair<Double, ArrayList<Integer>>>>();
 
@@ -373,16 +329,6 @@ public class Decoder {
 
                 if (classifierType== ClassifierType.AveragedPerceptron) {
                     labelScores = acClassifier.score(featVector);
-                } else if (classifierType == ClassifierType.Adam) {
-                    ArrayList<Integer> feats = new ArrayList<Integer>();
-                    for (int d = 0; d < featVector.length; d++)
-                        if (featDict[d].containsKey(featVector[d]))
-                            //seen feature value
-                            feats.add(featDict[d].get(featVector[d]));
-                    double[] probEstimates = new double[numOfLabels];
-                    int prediction = acClassifier_adam.argmax(feats, probEstimates, true);
-                    for (int labelIdx=0; labelIdx< numOfLabels; labelIdx++)
-                        labelScores[labelIdx] = Math.log(probEstimates[labelIdx]);
                 }
 
                 // build an intermediate beam
@@ -434,19 +380,6 @@ public class Decoder {
                 double[] labelScores = acClassifier.score(featVector);
                 int predictedLabel = argmax(labelScores);
                 acCandids.add(predictedLabel);
-            } else if (classifierType == ClassifierType.Adam) {
-                String[] labelMap = acClassifier_adam.getLabelMap();
-                // retrieve candidates for the current word
-                Object[] featVector = FeatureExtractor.extractACFeatures(pIdx, wordIdx, sentence, numOfFeatures, indexMap, false, 0);
-                ArrayList<Integer> feats = new ArrayList<Integer>();
-                for (int d = 0; d < featVector.length; d++)
-                    if (featDict[d].containsKey(featVector[d]))
-                        //seen feature value
-                        feats.add(featDict[d].get(featVector[d]));
-
-                double[] probEstimates = new double[labelMap.length];
-                int prediction = acClassifier_adam.argmax(feats, probEstimates, true);
-                acCandids.add(prediction);
             }
         }
         assert aiCandidates.size() == acCandids.size();
@@ -462,8 +395,6 @@ public class Decoder {
         int numOfLabels = 0;
         if (classifierType == ClassifierType.AveragedPerceptron)
             numOfLabels = acClassifier.getLabelMap().length;
-        else if (classifierType == ClassifierType.Adam)
-            numOfLabels = acClassifier_adam.getLabelMap().length;
 
         ArrayList<Pair<Double, ArrayList<Integer>>> currentBeam = new ArrayList<Pair<Double, ArrayList<Integer>>>();
         currentBeam.add(new Pair<Double, ArrayList<Integer>>(0., new ArrayList<Integer>()));
@@ -477,22 +408,9 @@ public class Decoder {
 
             if (classifierType == ClassifierType.AveragedPerceptron)
                 labelScores = acClassifier.score(featVector);
-            else if (classifierType == ClassifierType.Adam) {
-                ArrayList<Integer> feats = new ArrayList<Integer>();
-                for (int d = 0; d < featVector.length; d++)
-                    if (featDict[d].containsKey(featVector[d]))
-                        //seen feature value
-                        feats.add(featDict[d].get(featVector[d]));
-
-                double[] probEstimates = new double[numOfLabels];
-                int prediction = acClassifier_adam.argmax(feats, probEstimates, true);
-                for (int labelIdx=0; labelIdx< numOfLabels; labelIdx++)
-                    labelScores[labelIdx] = Math.log(probEstimates[labelIdx]);
-            }
 
             // build an intermediate beam
             TreeSet<BeamElement> newBeamHeap = new TreeSet<BeamElement>();
-
             for (int index = 0; index < currentBeam.size(); index++) {
                 double currentScore = currentBeam.get(index).first;
 
@@ -502,9 +420,7 @@ public class Decoder {
                         newBeamHeap.pollFirst();
                 }
             }
-
             ArrayList<Pair<Double, ArrayList<Integer>>> newBeam = new ArrayList<Pair<Double, ArrayList<Integer>>>(maxBeamSize);
-
             for (BeamElement beamElement : newBeamHeap) {
                 ArrayList<Integer> newArrayList = (ArrayList<Integer>) currentBeam.get(beamElement.index).second.clone();
                 newArrayList.add(beamElement.label);
@@ -528,8 +444,6 @@ public class Decoder {
 
         if (classifierType == ClassifierType.AveragedPerceptron)
             numOfLabels = acClassifier.getLabelMap().length;
-        else if (classifierType == ClassifierType.Adam)
-            numOfLabels = acClassifier_adam.getLabelMap().length;
 
         for (int wordIdx = 1; wordIdx < sentence.getWords().length; wordIdx++) {
             // retrieve candidates for the current word
@@ -538,18 +452,6 @@ public class Decoder {
 
             if (classifierType == ClassifierType.AveragedPerceptron)
                 labelScores = acClassifier.score(featVector);
-            else if (classifierType == ClassifierType.Adam) {
-                ArrayList<Integer> feats = new ArrayList<Integer>();
-                for (int d = 0; d < featVector.length; d++)
-                    if (featDict[d].containsKey(featVector[d]))
-                        //seen feature value
-                        feats.add(featDict[d].get(featVector[d]));
-
-                double[] probEstimates = new double[numOfLabels];
-                int prediction = acClassifier_adam.argmax(feats, probEstimates,true);
-                for (int labelIdx = 0; labelIdx < numOfLabels; labelIdx++)
-                    labelScores[labelIdx] = Math.log(probEstimates[labelIdx]);
-            }
 
             int prediction = argmax(labelScores);
             predictedLabels[wordIdx] = prediction;

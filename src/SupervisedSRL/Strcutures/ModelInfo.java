@@ -1,6 +1,5 @@
 package SupervisedSRL.Strcutures;
 
-import ml.Adam;
 import ml.AveragedPerceptron;
 
 import java.io.*;
@@ -15,7 +14,6 @@ import java.util.zip.GZIPOutputStream;
 public class ModelInfo implements Serializable {
 
     AveragedPerceptron classifier;
-    Adam classifierAdam;
     HashMap<Object, Integer>[] featDict;
     HashMap<String, Integer> labelDict;
     IndexMap indexMap;
@@ -63,26 +61,6 @@ public class ModelInfo implements Serializable {
         this.classifier = new AveragedPerceptron(newAvgWeight, labelMap, reverseLabelMap);
         this.indexMap = indexMap;
 
-    }
-
-
-    public ModelInfo(String modelPath, String mappingDictsPath, ClassifierType classifierType) throws Exception {
-
-        this.classifierAdam = Adam.loadModel(modelPath);
-
-        FileInputStream fis = new FileInputStream(mappingDictsPath);
-        GZIPInputStream gz = new GZIPInputStream(fis);
-        ObjectInput reader = new ObjectInputStream(gz);
-        HashMap<Object, Integer>[] featDict =
-                (HashMap<Object, Integer>[]) reader.readObject();
-        IndexMap indexMap = (IndexMap) reader.readObject();
-        HashMap<String, Integer> labelDict= (HashMap<String, Integer>) reader.readObject();
-        fis.close();
-        gz.close();
-        reader.close();
-        this.indexMap = indexMap;
-        this.featDict = featDict;
-        this.labelDict= labelDict;
     }
 
 
@@ -139,21 +117,6 @@ public class ModelInfo implements Serializable {
         endTime = System.currentTimeMillis();
         //System.out.println("Total time to save indexMap: " + format.format( ((endTime - startTime)/1000.0)/ 60.0));
 
-        writer.close();
-    }
-
-
-    public static void saveModel(Adam classifier, IndexMap indexMap, HashMap<Object, Integer>[] featDict,
-                                 HashMap<String, Integer> labelDict, String modelPath, String mappingDictsPath) throws Exception {
-
-        classifier.saveModel(modelPath);
-        //save featDic
-        FileOutputStream fos = new FileOutputStream(mappingDictsPath);
-        GZIPOutputStream gz = new GZIPOutputStream(fos);
-        ObjectOutput writer = new ObjectOutputStream(gz);
-        writer.writeObject(featDict);
-        writer.writeObject(indexMap);
-        writer.writeObject(labelDict);
         writer.close();
     }
 
@@ -222,6 +185,4 @@ public class ModelInfo implements Serializable {
     public HashMap<Object, Integer>[] getFeatDict() {return featDict;}
 
     public HashMap<String, Integer> getLabelDict() {return labelDict;}
-
-    public Adam getClassifierAdam() {return classifierAdam;}
 }
