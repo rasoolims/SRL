@@ -35,6 +35,11 @@ public class MLPNetwork implements Serializable {
     int numWordLayers;
     int numPosLayers;
     int numDepLayers;
+    int numSubcatLayers;
+    int numPosPathLayers;
+    int numDepPathLayers;
+    int numPositionLayers;
+
     int numOutputs;
     int wDim;
     int pDim;
@@ -49,7 +54,15 @@ public class MLPNetwork implements Serializable {
         this.wDim = wDim;
         this.pDim = pDim;
         this.depDim = lDim;
+        this.numWordLayers = maps.numWordFeatures;
+        this.numPosLayers = maps.numPosFeatures;
+        this.numDepLayers = maps.numDepFeatures;
+        this.numSubcatLayers = maps.numSubcatFeatures;
+        this.numPosPathLayers = maps.numPositionFeatures;
+        this.numDepPathLayers = maps.numDepPathFeatures;
+        this.numPositionLayers = maps.numPosPathFeatures;
         this.layers = new ArrayList<>();
+
         int nIn = numWordLayers * wDim + numPosLayers * pDim + numDepLayers * lDim
                 + maps.numSubcatFeatures*subcatDim + maps.numDepPathFeatures*depPathDim
                 + maps.numPosPathFeatures*posPathDim + maps.numPositionFeatures*positionDim;
@@ -79,13 +92,18 @@ public class MLPNetwork implements Serializable {
         this.options = options;
     }
 
-    public MLPNetwork(Options options, ArrayList<Layer> layers, int numWordLayers, int numPosLayers, int numDepLayers, int numOutputs) {
+    public MLPNetwork(Options options, ArrayList<Layer> layers, int numWordLayers, int numPosLayers, int numDepLayers,
+                      int numSubcatLayers, int numDepPathLayers, int numPosPathLayers, int numPositionLayers, int numOutputs) {
         this.options = options;
         this.layers = layers;
         this.numWordLayers = numWordLayers;
         this.numPosLayers = numPosLayers;
         this.numDepLayers = numDepLayers;
         this.numOutputs = numOutputs;
+        this.numSubcatLayers = numSubcatLayers;
+        this.numPosPathLayers = numPosPathLayers;
+        this.numDepPathLayers = numDepPathLayers;
+        this.numPositionLayers =numPositionLayers;
         this.maps = null;
     }
 
@@ -193,7 +211,8 @@ public class MLPNetwork implements Serializable {
         for (int l = 0; l < this.layers.size(); l++) {
             layers.add(this.layers.get(l).copy(zeroOut, deepCopy));
         }
-        MLPNetwork network = new MLPNetwork(options, layers, numWordLayers, numPosLayers, numDepLayers, numOutputs);
+        MLPNetwork network = new MLPNetwork(options, layers, numWordLayers, numPosLayers, numDepLayers,
+                numSubcatLayers, numDepPathLayers, numPosPathLayers, numPositionLayers, numOutputs);
         ((FirstHiddenLayer) network.layer(0)).setPrecomputationMap(((FirstHiddenLayer) layer(0)).getPrecomputationMap());
         return network;
     }

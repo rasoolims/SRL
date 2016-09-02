@@ -23,7 +23,7 @@ public class UpdaterProperties implements Serializable {
         updaterType = UpdaterType.ADAM;
         sgdType = SGDType.NESTEROV;
         // good for ADAM.
-        learningRate = 0.0005;
+        learningRate = 0.001;
         momentum = 0.9;
     }
 

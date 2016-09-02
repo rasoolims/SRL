@@ -118,7 +118,6 @@ public class NNIndexMaps implements Serializable {
     public double[] features(BaseFeatures baseFeatures){
        double[] feats = new double[featDim];
         int i=0;
-        feats[i++] = baseFeatures.positionFeatures.features.get(0);
         for(String wordFeat: baseFeatures.wordFeatures.features){
               feats[i++] = word2int(wordFeat);
         }
@@ -142,6 +141,8 @@ public class NNIndexMaps implements Serializable {
         for(String posPath: baseFeatures.posPathFeatures.features){
             feats[i++] = posPath2int(posPath);
         }
+        feats[i++] = baseFeatures.positionFeatures.features.get(0);
+
         return feats;
     }
     

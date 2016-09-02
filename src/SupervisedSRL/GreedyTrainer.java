@@ -88,11 +88,8 @@ public class GreedyTrainer {
     private static void trainNetwork(Options options, NNIndexMaps maps, ArrayList<String> trainSentencesInCONLLFormat,
                                      ArrayList<String> devSentencesInCONLLFormat, MLPNetwork mlpNetwork) throws Exception {
         MLPNetwork avgMlpNetwork = mlpNetwork.clone(true, true);
-
-        GreedyTrainer trainer = new GreedyTrainer(options, maps);
-
+        avgMlpNetwork.maps = maps;
         ArrayList<String> dataSet =trainSentencesInCONLLFormat;
-
         boolean binary = mlpNetwork.getNumOutputs() ==2 ? true: false;
         ArrayList<NeuralTrainingInstance> allInstances = Train.getNextInstances(dataSet, 0, dataSet.size(), mlpNetwork.maps, binary);
         mlpNetwork.maps.constructPreComputeMap(allInstances, mlpNetwork.getNumWordLayers(), 10000);

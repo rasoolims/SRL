@@ -21,7 +21,7 @@ public class Pipeline {
        Options options =  Options.processArgs(args);
 
         if (options.generalProperties.train) {
-            String[] modelPaths = Train.train(options.trainingOptions.trainFile, options.trainingOptions.devPath,
+            String[] modelPaths = Train.train(options, options.trainingOptions.trainFile, options.trainingOptions.devPath,
                     options.generalProperties.modelDir, numOfPDFeatures);
         } else if(options.generalProperties.parseConllFile){
             //stacked decoding

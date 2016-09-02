@@ -44,11 +44,13 @@ public class Train {
                         label[isArg] = 1;
                         BaseFeatures baseFeatures = new BaseFeatures(pIdx, wordIdx, sentence);
                         NeuralTrainingInstance instance = new NeuralTrainingInstance(maps.features(baseFeatures), label);
+                        instances.add(instance);
                     } else if (isArg == 1) {
                         double[] label = new double[maps.labelMap.size()];
                         label[maps.labelMap.get(arg)] = 1;
                         BaseFeatures baseFeatures = new BaseFeatures(pIdx, wordIdx, sentence);
                         NeuralTrainingInstance instance = new NeuralTrainingInstance(maps.features(baseFeatures), label);
+                        instances.add(instance);
                     }
                 }
             }
@@ -79,7 +81,7 @@ public class Train {
     }
 
     //this function is used to train stacked ai-ac models
-    public static String[] train(String trainData,
+    public static String[] train(Options options, String trainData,
                                  String devData,
                                  String modelDir,
                                  int numOfPDFeatures) throws Exception {
@@ -95,33 +97,27 @@ public class Train {
         PD.train(trainSentencesInCONLLFormat, Pipeline.numOfPDTrainingIterations, modelDir, numOfPDFeatures);
         NNIndexMaps nnIndexMaps = createIndicesForNN(trainSentencesInCONLLFormat);
 
-        aiModelPath = trainAI(trainSentencesInCONLLFormat, devSentencesInCONLLFormat, nnIndexMaps, modelDir);
-        acModelPath = trainAC(trainSentencesInCONLLFormat, devSentencesInCONLLFormat, nnIndexMaps, modelDir);
+        aiModelPath = trainAI(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, nnIndexMaps, modelDir);
+        acModelPath = trainAC(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, nnIndexMaps, modelDir);
         return new String[]{aiModelPath, aiMappingDictsPath, acModelPath, acMappingDictsPath};
     }
 
-    public static String trainAI(ArrayList<String> trainSentencesInCONLLFormat,
+    public static String trainAI(Options options, ArrayList<String> trainSentencesInCONLLFormat,
                                  ArrayList<String> devSentencesInCONLLFormat,
                                  NNIndexMaps maps, String modelDir)
             throws Exception {
-        Options aiOptions = new Options();
-        aiOptions.trainingOptions.trainingIter = 10;
-        aiOptions.trainingOptions.preTrainingIter = 10;
-        GreedyTrainer.trainWithNN(aiOptions, maps, 2, trainSentencesInCONLLFormat, devSentencesInCONLLFormat);
+        GreedyTrainer.trainWithNN(options, maps, 2, trainSentencesInCONLLFormat, devSentencesInCONLLFormat);
         String modelPath = modelDir + "/AI.model";
         return modelPath;
     }
 
 
-    public static String trainAC(ArrayList<String> trainSentencesInCONLLFormat,
+    public static String trainAC(Options options, ArrayList<String> trainSentencesInCONLLFormat,
                                  ArrayList<String> devSentencesInCONLLFormat,
                                  NNIndexMaps maps, String modelDir)
             throws Exception {
 
-        Options acOptions = new Options();
-        acOptions.trainingOptions.trainingIter = 10;
-        acOptions.trainingOptions.preTrainingIter = 10;
-        GreedyTrainer.trainWithNN(acOptions, maps, maps.labelMap.size(), trainSentencesInCONLLFormat, devSentencesInCONLLFormat);
+        GreedyTrainer.trainWithNN(options, maps, maps.labelMap.size(), trainSentencesInCONLLFormat, devSentencesInCONLLFormat);
         String modelPath = modelDir + "/AC.model";
         return modelPath;
     }

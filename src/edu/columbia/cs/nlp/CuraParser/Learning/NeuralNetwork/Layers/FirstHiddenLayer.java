@@ -51,12 +51,12 @@ public class FirstHiddenLayer extends Layer {
                             int wDim, int posDim, int depDim, int subcatDim, int depPathDim, int posPathDim, int positionDim,
                             HashMap<Integer, double[]> embeddingsDictionary) {
         super(activation, nIn, nOut, initializer, biasInit);
-        this.wordEmbeddings = new WordEmbeddingLayer(wDim, nnIndexMaps.wordFeatMap.size(), random, precomputationMap);
-        this.posEmbeddings = new EmbeddingLayer(posDim, nnIndexMaps.posFeatMap.size(), random);
-        this.depEmbeddings = new EmbeddingLayer(depDim, nnIndexMaps.depFeatMap.size(), random);
-        this.subcatEmbeddings = new EmbeddingLayer(subcatDim, nnIndexMaps.subcatFeatMap.size(), random);
-        this.depPathEmbeddings = new EmbeddingLayer(depPathDim, nnIndexMaps.depPathFeatMap.size(), random);
-        this.posPathEmbeddings = new EmbeddingLayer(posPathDim, nnIndexMaps.posPathFeatMap.size(), random);
+        this.wordEmbeddings = new WordEmbeddingLayer(wDim, nnIndexMaps.wordFeatMap.size()+2, random, precomputationMap);
+        this.posEmbeddings = new EmbeddingLayer(posDim, nnIndexMaps.posFeatMap.size()+2, random);
+        this.depEmbeddings = new EmbeddingLayer(depDim, nnIndexMaps.depFeatMap.size()+2, random);
+        this.subcatEmbeddings = new EmbeddingLayer(subcatDim, nnIndexMaps.subcatFeatMap.size()+2, random);
+        this.depPathEmbeddings = new EmbeddingLayer(depPathDim, nnIndexMaps.depPathFeatMap.size()+2, random);
+        this.posPathEmbeddings = new EmbeddingLayer(posPathDim, nnIndexMaps.posPathFeatMap.size()+2, random);
         this.positionEmbeddings = new EmbeddingLayer(positionDim, 3, random);
 
         this.numWordLayers = nnIndexMaps.numWordFeatures;
@@ -228,7 +228,11 @@ public class FirstHiddenLayer extends Layer {
             } else {
                 for (int i : hiddenToUSe) {
                     for (int k = 0; k < embedding.dim(); k++) {
-                        hidden[i] += w[i][offset + k] * embedding.w(tok, k);
+                        try {
+                            hidden[i] += w[i][offset + k] * embedding.w(tok, k);
+                        }catch (Exception ex){
+                            System.out.println("WHY?");
+                        }
                     }
                 }
             }
@@ -280,7 +284,7 @@ public class FirstHiddenLayer extends Layer {
             offset += netWordEmbeddings.dim();
         }
 
-        for (int index = numWordLayers; index < numWordLayers + numPosLayers + numDepLayers; index++) {
+        for (int index = numWordLayers; index < numWordLayers + numPosLayers; index++) {
             int tok = (int) prevH[index];
             Utils.sumi(savedGradients[index][tok], newDelta);
             offset += posEmbeddings.dim();
@@ -291,7 +295,6 @@ public class FirstHiddenLayer extends Layer {
             Utils.sumi(savedGradients[index][tok], newDelta);
             offset += depEmbeddings.dim();
         }
-
 
         for (int index = numWordLayers + numPosLayers + numDepLayers; index <  numWordLayers + numPosLayers + numDepLayers+ numSubcatLayers; index++) {
             int tok = (int) prevH[index];
