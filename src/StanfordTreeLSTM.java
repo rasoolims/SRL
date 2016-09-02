@@ -1,7 +1,6 @@
-import Sentence.Argument;
-import Sentence.PA;
-import Sentence.Sentence;
-import SupervisedSRL.Strcutures.IndexMap;
+import SentenceStructures.Argument;
+import SentenceStructures.PA;
+import SentenceStructures.Sentence;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
@@ -18,14 +17,14 @@ import java.util.HashSet;
  */
 public class StanfordTreeLSTM {
 
-    static HashSet<Integer> vocab = new HashSet<Integer>();
+    static HashSet<String> vocab = new HashSet<>();
 
-    public static ArrayList<String> generateData4StanfordTreeLSTM(Sentence sen, IndexMap indexMap, boolean justCoreRoles) throws Exception {
+    public static ArrayList<String> generateData4StanfordTreeLSTM(Sentence sen, boolean justCoreRoles) throws Exception {
 
         ArrayList<PA> pas_list = sen.getPredicateArguments().getPredicateArgumentsAsArray();
-        int[] posTags = sen.getPosTags();
-        int[] words = sen.getWords();
-        int[] depRels = sen.getDepLabels();
+        String[] posTags = sen.getPosTags();
+        String[] words = sen.getWords();
+        String[] depRels = sen.getDepLabels();
         String[] depParents = sen.getDepHeads_as_str();
 
         StringBuilder sentences2write = new StringBuilder();
@@ -45,7 +44,7 @@ public class StanfordTreeLSTM {
                 for (int k = 1; k < depParents.length; k++)
                     depParents2write.append(depParents[k] + " ");
 
-                if (indexMap.int2str(posTags[predicateIndex]).startsWith("VB")) {
+                if (posTags[predicateIndex].startsWith("VB")) {
 
                     String srl_label = "";
                     String test_label = "";
@@ -147,8 +146,8 @@ public class StanfordTreeLSTM {
     }
 
     public static void updateVocab(Sentence sen) {
-        int[] words = Arrays.copyOfRange(sen.getWords(), 1, sen.getWords().length);
-        for (int word : words) {
+        String[] words = Arrays.copyOfRange(sen.getWords(), 1, sen.getWords().length);
+        for (String word : words) {
             if (!vocab.contains(word))
                 vocab.add(word);
         }
@@ -156,7 +155,7 @@ public class StanfordTreeLSTM {
 
     public static void writeVocab(String filePath /*, boolean cased*/) throws IOException {
         BufferedWriter treeLSTM_vocab_writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath)));
-        for (int word : vocab) {
+        for (String word : vocab) {
             /*if (cased)*/
             treeLSTM_vocab_writer.write(word + "\n");
             /*else

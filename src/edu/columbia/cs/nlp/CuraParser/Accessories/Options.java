@@ -85,7 +85,6 @@ public class Options implements Serializable {
         output.append("\t \t -u [updater-type: sgd,adam(default),adamax,adagrad] \n");
         output.append("\t \t -sgd [sgd-type (if using sgd): nesterov(default),momentum, vanilla] \n");
         output.append("\t \t -batch [batch-size; default 1000] \n");
-        output.append("\t \t -beam_batch [beam-batch-size -- num of sentences in a batch (default:8)] \n");
         output.append("\t \t -d [dropout-prob (default:0)] \n");
         output.append("\t \t -bias [true/false (use output bias term in softmax layer: default true)] \n");
         output.append("\t \t -reg [regularization with L2] \n");
@@ -100,7 +99,6 @@ public class Options implements Serializable {
         output.append("\t \t beam:[beam-width] (default:8)\n");
         output.append("\t \t pre_iter:[pre-training-iterations for first layer in multi-layer] (default:20000)\n");
         output.append("\t \t iter:[training-iterations] (default:30000)\n");
-        output.append("\t \t beam_iter:[beam-training-iterations] (default:20000)\n");
         output.append("\t \t consider_all (put want to consider all, even infeasible actions)\n");
         output.append("\t \t unlabeled (default: labeled parsing, unless explicitly put `unlabeled')\n");
         output.append("\t \t -layer_pretrain (true/false default:true)\n");
@@ -235,8 +233,6 @@ public class Options implements Serializable {
                 options.networkProperties.hiddenLayer2Size = Integer.parseInt(args[i + 1]);
             else if (args[i].equals("-batch"))
                 options.networkProperties.batchSize = Integer.parseInt(args[i + 1]);
-            else if (args[i].equals("-beam_batch"))
-                options.networkProperties.beamBatchSize = Integer.parseInt(args[i + 1]);
             else if (args[i].equals("-posdim"))
                 options.networkProperties.posDim = Integer.parseInt(args[i + 1]);
             else if (args[i].equals("-depdim"))
@@ -265,8 +261,6 @@ public class Options implements Serializable {
                 options.separator = args[i + 1];
             else if (args[i].startsWith("beam:"))
                 options.generalProperties.beamWidth = Integer.parseInt(args[i].substring(args[i].lastIndexOf(":") + 1));
-            else if (args[i].startsWith("beam_iter:"))
-                options.trainingOptions.beamTrainingIter = Integer.parseInt(args[i].substring(args[i].lastIndexOf(":") + 1));
             else if (args[i].startsWith("pre_iter:"))
                 options.trainingOptions.preTrainingIter = Integer.parseInt(args[i].substring(args[i].lastIndexOf(":") + 1));
             else if (args[i].startsWith("nt:"))

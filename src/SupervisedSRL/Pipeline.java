@@ -1,11 +1,16 @@
 package SupervisedSRL;
 
 import SupervisedSRL.Strcutures.ClassifierType;
-import SupervisedSRL.Strcutures.IndexMap;
 import SupervisedSRL.Strcutures.ModelInfo;
+import edu.columbia.cs.nlp.CuraParser.Accessories.Options;
+import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.MLPNetwork;
 import ml.AveragedPerceptron;
 
+import java.io.FileInputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.util.HashMap;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Created by monadiab on 5/25/16.
@@ -57,50 +62,31 @@ public class Pipeline {
         }
 
         if (!decodeOnly) {
-            String[] modelPaths = new String[4];
-
-            //stacked decoding
-            if (classifierType == ClassifierType.NN) {
-                modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
-                        numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
-                        ClassifierType.NN, greedy, numOfThreads);
-
-            } else if (classifierType == ClassifierType.AveragedPerceptron) {
-                modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
-                        numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
-                        ClassifierType.AveragedPerceptron, greedy, numOfThreads);
-
-                ModelInfo aiModelInfo = new ModelInfo(modelPaths[0]);
-                IndexMap indexMap = aiModelInfo.getIndexMap();
-                AveragedPerceptron aiClassifier = aiModelInfo.getClassifier();
-                AveragedPerceptron acClassifier = AveragedPerceptron.loadModel(modelPaths[2]);
-                Decoder.decode(new Decoder(aiClassifier, acClassifier),
-                        aiModelInfo.getIndexMap(),
-                        devData, acClassifier.getLabelMap(),
-                        aiMaxBeamSize, acMaxBeamSize, numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
-                        modelDir, outputFile, null, null, ClassifierType.AveragedPerceptron, greedy);
-
-                HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acClassifier.getReverseLabelMap());
-                reverseLabelMap.put("0", reverseLabelMap.size());
-                Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-            }
+            String[] modelPaths = Train.train(trainData, devData, modelDir, numOfPDFeatures);
         } else {
             //stacked decoding
-            if (classifierType == ClassifierType.AveragedPerceptron) {
-                ModelInfo aiModelInfo = new ModelInfo(modelDir + "/AI.model");
-                IndexMap indexMap = aiModelInfo.getIndexMap();
-                AveragedPerceptron aiClassifier = aiModelInfo.getClassifier();
-                AveragedPerceptron acClassifier = AveragedPerceptron.loadModel(modelDir + "/AC.model");
-                Decoder.decode(new Decoder(aiClassifier, acClassifier),
-                        aiModelInfo.getIndexMap(),
-                        devData, acClassifier.getLabelMap(),
-                        aiMaxBeamSize, acMaxBeamSize, numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
-                        modelDir, outputFile, null, null, ClassifierType.AveragedPerceptron, greedy);
 
-                HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acClassifier.getReverseLabelMap());
-                reverseLabelMap.put("0", reverseLabelMap.size());
-                Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-            }
+            FileInputStream fos1 = new FileInputStream(modelDir + "/AI.model");
+            GZIPInputStream gz1 = new GZIPInputStream(fos1);
+            ObjectInput reader1 = new ObjectInputStream(gz1);
+            MLPNetwork aiClassifier = (MLPNetwork) reader1.readObject();
+            Options infoptions1 = (Options) reader1.readObject();
+
+
+            FileInputStream fos2 = new FileInputStream(modelDir + "/AI.model");
+            GZIPInputStream gz2 = new GZIPInputStream(fos2);
+            ObjectInput reader2 = new ObjectInputStream(gz2);
+            MLPNetwork acClassifier = (MLPNetwork) reader2.readObject();
+            Options infoptions2 = (Options) reader2.readObject();
+
+            // todo sure not working
+            Decoder.decode(new Decoder(aiClassifier, acClassifier),
+                    devData, acClassifier.maps.revLabel,
+                    aiMaxBeamSize, acMaxBeamSize, numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
+                    modelDir, outputFile, null, null, ClassifierType.AveragedPerceptron, greedy);
+
+            // todo sure not working
+            Evaluation.evaluate(outputFile, devData, acClassifier.maps.labelMap);
         }
     }
 }

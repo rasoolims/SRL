@@ -9,11 +9,11 @@ import java.util.Collection;
 public class StringUtils {
 
     // todo
-    public static String convertPathArrayIntoString(ArrayList<Integer> depPathArray) {
+    public static String convertPathArrayIntoString(ArrayList<String> depPathArray) {
         // todo StringBuilder
         //StringBuilder depPath= new StringBuilder();
         String depPath = "";
-        for (int dep : depPathArray) {
+        for (String dep : depPathArray) {
             //depPath.append(dep);
             //depPath.append("\t");
             depPath += dep + "\t";

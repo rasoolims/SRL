@@ -105,9 +105,8 @@ public class IO {
 
     public static void writePredictionsInCoNLLFormat(ArrayList<ArrayList<String>> sentencesForOutput,
                                                      TreeMap<Integer, Prediction>[] predictedPAs,
-                                                     String[] labelMap,
-                                                     String outputFile)
-            throws IOException {
+                                                     ArrayList<String> labelMap,
+                                                     String outputFile) throws IOException {
         BufferedWriter outputWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile)));
         for (int d = 0; d < sentencesForOutput.size(); d++) {
             ArrayList<String> sentenceForOutput = sentencesForOutput.get(d);
@@ -133,9 +132,9 @@ public class IO {
                 for (int pIdx : predictionForThisSentence.keySet()) {
                     HashMap<Integer, Integer> argumentLabels = predictionForThisSentence.get(pIdx).getArgumentLabels();
                     if (argumentLabels.containsKey(realWordIdx)) {
-                        if (!labelMap[argumentLabels.get(realWordIdx)].equals("0"))
+                        if (!labelMap.get(argumentLabels.get(realWordIdx)).equals("0"))
                             //word is an argument
-                            outputWriter.write("\t" + labelMap[argumentLabels.get(realWordIdx)]);
+                            outputWriter.write("\t" + labelMap.get(argumentLabels.get(realWordIdx)));
                         else
                             //word is not an argument for this predicate
                             outputWriter.write("\t_");

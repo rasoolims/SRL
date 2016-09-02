@@ -1,6 +1,4 @@
-package Sentence;
-
-import SupervisedSRL.Strcutures.IndexMap;
+package SentenceStructures;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,44 +8,40 @@ import java.util.TreeSet;
  * Created by Maryam Aminian on 12/9/15.
  */
 public class Sentence {
-
     int[] depHeads;
-    int[] depLabels;
-    int[] words;
-    int[] wordClusterIds;
-    int[] posTags;
-    int[] cPosTags;
-    int[] lemmas;
-    int[] lemmaClusterIds;
+    String[] depLabels;
+    String[] words;
+    String[] wordClusterIds;
+    String[] posTags;
+    String[] cPosTags;
+    String[] lemmas;
     String[] lemmas_str;
     TreeSet<Integer>[] reverseDepHeads;
     PAs predicateArguments;
 
 
-    public Sentence(String sentence, IndexMap indexMap) {
+    public Sentence(String sentence) {
         String[] tokens = sentence.trim().split("\n");
 
         int numTokens = tokens.length + 1; //add one more token for ROOT
         int predicatesSeq = -1;
 
         depHeads = new int[numTokens];
-        depHeads[0] = IndexMap.nullIdx;
-        depLabels = new int[numTokens];
-        depLabels[0] = IndexMap.nullIdx;
-        words = new int[numTokens];
-        words[0] = indexMap.str2int("ROOT");
-        posTags = new int[numTokens];
+        depHeads[0] = -1;
+        depLabels = new String[numTokens];
+        depLabels[0] = "";
+        words = new String[numTokens];
+        words[0] = "ROOT";
+        posTags = new String[numTokens];
         posTags[0] = words[0];
-        cPosTags = new int[numTokens];
+        cPosTags = new String[numTokens];
         cPosTags[0] = words[0];
-        lemmas = new int[numTokens];
+        lemmas = new String[numTokens];
         lemmas[0] = words[0];
         lemmas_str = new String[numTokens];
         lemmas_str[0] = "ROOT";
-        wordClusterIds = new int[numTokens];
-        wordClusterIds[0] = indexMap.ROOTClusterIdx;
-        lemmaClusterIds = new int[numTokens];
-        lemmaClusterIds[0] = indexMap.ROOTClusterIdx;
+        wordClusterIds = new String[numTokens];
+        wordClusterIds[0] = "_";
 
         reverseDepHeads = new TreeSet[numTokens];
         predicateArguments = new PAs();
@@ -60,13 +54,12 @@ public class Sentence {
             int depHead = Integer.parseInt(fields[9]);
             depHeads[index] = depHead;
 
-            words[index] = indexMap.str2int(fields[1]);
-            wordClusterIds[index] = indexMap.getClusterId(fields[1]);
-            depLabels[index] = indexMap.str2int(fields[11]);
-            posTags[index] = indexMap.str2int(fields[5]);
-            cPosTags[index] = indexMap.str2int(util.StringUtils.getCoarsePOS(fields[5]));
-            lemmas[index] = indexMap.str2int(fields[3]);
-            lemmaClusterIds[index]= indexMap.getClusterId(fields[3]);
+            words[index] = fields[1];
+            wordClusterIds[index] = fields[1];
+            depLabels[index] = fields[11];
+            posTags[index] = fields[5];
+            cPosTags[index] = util.StringUtils.getCoarsePOS(fields[5]);
+            lemmas[index] = fields[3];
 
             if (reverseDepHeads[depHead] == null) {
                 TreeSet<Integer> children = new TreeSet<Integer>();
@@ -97,10 +90,10 @@ public class Sentence {
         }
     }
 
-    public ArrayList<Integer> getDepPath(int source, int target) {
-        int right = 0;
-        int left = 1;
-        ArrayList<Integer> visited = new ArrayList<Integer>();
+    public ArrayList<String> getDepPath(int source, int target) {
+        String right = ">>";
+        String left = "<<";
+        ArrayList<String> visited = new ArrayList<>();
 
         if (source != target) {
             if (reverseDepHeads[source] != null) {
@@ -108,18 +101,18 @@ public class Sentence {
                 for (int child : reverseDepHeads[source]) {
                     if (child == target) {
                         if (child > source) {
-                            visited.add(depLabels[child] << 1 | right);
+                            visited.add(depLabels[child]+"|"+ right);
                         } else {
-                            visited.add(depLabels[child] << 1 | left);
+                            visited.add(depLabels[child] +"|"+ left);
                         }
                         break;
                     } else {
                         if (child > source) {
-                            visited.add(depLabels[child] << 1 | right);
+                            visited.add(depLabels[child] +"|"+  right);
                         } else {
-                            visited.add(depLabels[child] << 1 | left);
+                            visited.add(depLabels[child] +"|"+  left);
                         }
-                        ArrayList<Integer> visitedFromThisChild = getDepPath(child, target);
+                        ArrayList<String> visitedFromThisChild = getDepPath(child, target);
                         if (visitedFromThisChild.size() != 0) {
                             visited.addAll(visitedFromThisChild);
                             break;
@@ -136,10 +129,10 @@ public class Sentence {
     }
 
 
-    public ArrayList<Integer> getPOSPath(int source, int target) {
-        int right = 0;
-        int left = 1;
-        ArrayList<Integer> visited = new ArrayList<Integer>();
+    public ArrayList<String> getPOSPath(int source, int target) {
+        String right = ">>";
+        String left = "<<";
+        ArrayList<String> visited = new ArrayList<>();
 
         if (source != target) {
             if (reverseDepHeads[source] != null) {
@@ -154,11 +147,11 @@ public class Sentence {
                         break;
                     } else {
                         if (child > source) {
-                            visited.add(posTags[child] << 1 | right);
+                            visited.add(posTags[child] +"|"+ right);
                         } else {
-                            visited.add(posTags[child] << 1 | left);
+                            visited.add(posTags[child] +"|"+ left);
                         }
-                        ArrayList<Integer> visitedFromThisChild = getPOSPath(child, target);
+                        ArrayList<String> visitedFromThisChild = getPOSPath(child, target);
                         if (visitedFromThisChild.size() != 0) {
                             visited.addAll(visitedFromThisChild);
                             break;
@@ -180,12 +173,12 @@ public class Sentence {
     }
 
 
-    public int[] getPosTags() {
+    public String[] getPosTags() {
         return posTags;
     }
 
 
-    public int[] getCPosTags() {
+    public String[] getCPosTags() {
         return cPosTags;
     }
 
@@ -204,21 +197,19 @@ public class Sentence {
         return depHeads_str;
     }
 
-    public int[] getWords() {
+    public String[] getWords() {
         return words;
     }
 
-    public int[] getDepLabels() {
+    public String[] getDepLabels() {
         return depLabels;
     }
 
-    public int[] getLemmas() {
+    public String[] getLemmas() {
         return lemmas;
     }
 
-    public int[] getWordClusterIds() {return wordClusterIds;}
-
-    public int[] getLemmaClusterIds() {return lemmaClusterIds;}
+    public String[] getWordClusterIds() {return wordClusterIds;}
 
     public TreeSet<Integer>[] getReverseDepHeads() {
         return reverseDepHeads;

@@ -19,7 +19,6 @@ public class NetworkProperties implements Serializable {
     public int depDim;
     public int wDim;
     public int batchSize;
-    public int beamBatchSize;
     public double dropoutProbForHiddenLayer;
     public ActivationType activationType;
     public double regularization;
@@ -47,7 +46,6 @@ public class NetworkProperties implements Serializable {
         regularization = 1e-4;
         regualarizeAllLayers = false;
         batchSize = 1000;
-        beamBatchSize = 8;
         dropoutProbForHiddenLayer = 0;
         activationType = ActivationType.RELU;
         posDim = 32;
@@ -55,7 +53,7 @@ public class NetworkProperties implements Serializable {
         wDim = 64;
     }
 
-    private NetworkProperties(int hiddenLayer1Size, int hiddenLayer2Size, int posDim, int depDim, int wDim, int batchSize, int beamBatchSize, double
+    private NetworkProperties(int hiddenLayer1Size, int hiddenLayer2Size, int posDim, int depDim, int wDim, int batchSize,  double
             dropoutProbForHiddenLayer, ActivationType activationType, double regularization, boolean outputBiasTerm, boolean regualarizeAllLayers,
                               double reluLeakAlpha, double rReluL, double rReluU,
                               int subcatDim, int depPathDim, int posPathDim, int positionDim) {
@@ -65,7 +63,6 @@ public class NetworkProperties implements Serializable {
         this.depDim = depDim;
         this.wDim = wDim;
         this.batchSize = batchSize;
-        this.beamBatchSize = beamBatchSize;
         this.dropoutProbForHiddenLayer = dropoutProbForHiddenLayer;
         this.activationType = activationType;
         this.regularization = regularization;
@@ -88,7 +85,6 @@ public class NetworkProperties implements Serializable {
                 "regularization: " + regularization + "\n" +
                 "regularize all layers: " + regualarizeAllLayers + "\n" +
                 "batch size: " + batchSize + "\n" +
-                "beam batch size: " + beamBatchSize + "\n" +
                 "dropout probability: " + dropoutProbForHiddenLayer + "\n" +
                 "word dim: " + wDim + "\n" +
                 "pos dim: " + posDim + "\n" +
@@ -100,7 +96,7 @@ public class NetworkProperties implements Serializable {
 
     @Override
     public NetworkProperties clone() {
-        return new NetworkProperties(hiddenLayer1Size, hiddenLayer2Size, posDim, depDim, wDim, batchSize, beamBatchSize, dropoutProbForHiddenLayer,
+        return new NetworkProperties(hiddenLayer1Size, hiddenLayer2Size, posDim, depDim, wDim, batchSize, dropoutProbForHiddenLayer,
                 activationType, regularization, outputBiasTerm, regualarizeAllLayers, reluLeakAlpha, rReluL, rReluU,
                 subcatDim, depPathDim, posPathDim, positionDim);
     }

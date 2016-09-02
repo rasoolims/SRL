@@ -1,17 +1,16 @@
 package SupervisedSRL.Strcutures;
 
+import SentenceStructures.Argument;
+import SentenceStructures.PA;
+import SentenceStructures.Sentence;
 import SupervisedSRL.Features.BaseFeatures;
-import com.sun.xml.internal.rngom.parse.host.Base;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Utils;
 import edu.columbia.cs.nlp.CuraParser.Structures.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.Serializable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Created by Mohammad Sadegh Rasooli.
@@ -22,13 +21,16 @@ import java.util.TreeMap;
  */
 
 public class NNIndexMaps implements Serializable {
-    public HashMap<Integer, Integer> wordFeatMap;
-    public HashMap<Integer, Integer> posFeatMap;
-    public HashMap<Integer, Integer> depFeatMap;
+    public HashMap<String, Integer> wordFeatMap;
+    public HashMap<String, Integer> posFeatMap;
+    public HashMap<String, Integer> depFeatMap;
     public HashMap<String, Integer> subcatFeatMap;
     public HashMap<String, Integer> depPathFeatMap;
     public HashMap<String, Integer> posPathFeatMap;
     public HashMap<Integer, Integer>[] preComputeMap;
+    public HashMap<String, Integer> labelMap;
+    public ArrayList<String> revLabel;
+
     public int featDim;
     public int numWordFeatures;
     public int numDepFeatures;
@@ -44,12 +46,14 @@ public class NNIndexMaps implements Serializable {
 
     
     public NNIndexMaps() {
-        wordFeatMap = new HashMap<Integer, Integer>();
-        posFeatMap = new HashMap<Integer, Integer>();
-        depFeatMap = new HashMap<Integer, Integer>();
-        subcatFeatMap = new HashMap<String, Integer>();
-        depPathFeatMap = new HashMap<String, Integer>();
-        posPathFeatMap = new HashMap<String, Integer>();
+        wordFeatMap = new HashMap<>();
+        posFeatMap = new HashMap<>();
+        depFeatMap = new HashMap<>();
+        subcatFeatMap = new HashMap<>();
+        depPathFeatMap = new HashMap<>();
+        posPathFeatMap = new HashMap<>();
+        labelMap = new HashMap<>();
+        revLabel = new ArrayList<>();
     }
 
     public void addToMap(BaseFeatures baseFeatures){
@@ -62,7 +66,7 @@ public class NNIndexMaps implements Serializable {
         numPositionFeatures = 1;
 
         featDim = 1;
-        for(int wordFeat: baseFeatures.wordFeatures.features){
+        for(String wordFeat: baseFeatures.wordFeatures.features){
             if(!wordFeatMap.containsKey(wordFeat)){
                 int index = wordFeatMap.size()+2;
                 wordFeatMap.put(wordFeat, index);
@@ -70,7 +74,7 @@ public class NNIndexMaps implements Serializable {
             featDim++;
         }
 
-        for(int posFeat: baseFeatures.posFeatures.features){
+        for(String posFeat: baseFeatures.posFeatures.features){
             if(!posFeatMap.containsKey(posFeat)){
                 int index = posFeatMap.size()+2;
                 posFeatMap.put(posFeat, index);
@@ -78,7 +82,7 @@ public class NNIndexMaps implements Serializable {
             featDim++;
         }
 
-        for(int depFeat: baseFeatures.dependencyFeatures.features){
+        for(String depFeat: baseFeatures.dependencyFeatures.features){
             if(!depFeatMap.containsKey(depFeat)){
                 int index = depFeatMap.size()+2;
                 depFeatMap.put(depFeat, index);
@@ -114,16 +118,16 @@ public class NNIndexMaps implements Serializable {
     public double[] features(BaseFeatures baseFeatures){
        double[] feats = new double[featDim];
         int i=0;
-        feats[i++] = baseFeatures.posFeatures.features.get(0);
-        for(int wordFeat: baseFeatures.wordFeatures.features){
+        feats[i++] = baseFeatures.positionFeatures.features.get(0);
+        for(String wordFeat: baseFeatures.wordFeatures.features){
               feats[i++] = word2int(wordFeat);
         }
 
-        for(int posFeat: baseFeatures.posFeatures.features){
+        for(String posFeat: baseFeatures.posFeatures.features){
             feats[i++] = pos2int(posFeat);
         }
 
-        for(int depFeat: baseFeatures.dependencyFeatures.features){
+        for(String depFeat: baseFeatures.dependencyFeatures.features){
             feats[i++] = dep2int(depFeat);
         }
 
@@ -141,19 +145,19 @@ public class NNIndexMaps implements Serializable {
         return feats;
     }
     
-    public int word2int(int word){
+    public int word2int(String word){
         if(wordFeatMap.containsKey(word))
             return wordFeatMap.get(word);
         return UnknownIndex;
     }
 
-    public int pos2int(int pos){
+    public int pos2int(String pos){
         if(posFeatMap.containsKey(pos))
             return posFeatMap.get(pos);
         return UnknownIndex;
     }
 
-    public int dep2int(int dep){
+    public int dep2int(String dep){
         if(depFeatMap.containsKey(dep))
             return depFeatMap.get(dep);
         return UnknownIndex;
@@ -221,7 +225,7 @@ public class NNIndexMaps implements Serializable {
         }
     }
 
-    public int readEmbeddings(String path, IndexMap map) throws Exception {
+    public int readEmbeddings(String path) throws Exception {
         embeddingsDictionary = new HashMap<>();
         int eDim = 64;
 
@@ -229,9 +233,11 @@ public class NNIndexMaps implements Serializable {
         String line;
         while ((line = reader.readLine()) != null) {
             String[] spl = line.trim().split(" ");
-            int wordIndex = map.str2int(spl[0]);
-            if (wordFeatMap.containsKey(wordIndex))
-                wordIndex = wordFeatMap.get(wordFeatMap);
+            int wordIndex = -1;
+            if (wordFeatMap.containsKey(spl[0]))
+                wordIndex = wordFeatMap.get(spl[0]);
+            if (wordFeatMap.containsKey(spl[0].toLowerCase()))
+                wordIndex = wordFeatMap.get(spl[0].toLowerCase());
             else if (spl[0].equals("_unk_"))
                 wordIndex = UnknownIndex;
             if (wordIndex != -1) {
@@ -255,4 +261,12 @@ public class NNIndexMaps implements Serializable {
         embeddingsDictionary = null;
     }
 
+
+    public void addLabel(String label) {
+        if(!labelMap.containsKey(labelMap)){
+            int index = labelMap.size();
+            labelMap.put(label, index);
+            revLabel.add(label);
+        }
+    }
 }

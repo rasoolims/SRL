@@ -6,7 +6,10 @@
 
 package SupervisedSRL;
 
-import SupervisedSRL.Strcutures.IndexMap;
+import SentenceStructures.Argument;
+import SentenceStructures.PA;
+import SentenceStructures.Sentence;
+import SupervisedSRL.Features.BaseFeatures;
 import SupervisedSRL.Strcutures.NNIndexMaps;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Options;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Utils;
@@ -25,25 +28,30 @@ import java.util.zip.GZIPInputStream;
 public class GreedyTrainer {
     Options options;
     Random random;
+    NNIndexMaps maps;
 
-    public GreedyTrainer(Options options) {
+    public GreedyTrainer(Options options, NNIndexMaps maps) {
         this.options = options;
         random = new Random();
+        this.maps = maps;
     }
 
-    public static void trainWithNN(Options options, NNIndexMaps maps, IndexMap indexMap, int numOutputs) throws Exception {
+    public static void trainWithNN(Options options, NNIndexMaps maps, int numOutputs,
+                                   ArrayList<String> trainSentencesInCONLLFormat,
+                                   ArrayList<String> devSentencesInCONLLFormat) throws Exception {
         if (options.trainingOptions.trainFile.equals("") || options.generalProperties.modelFile.equals("")) {
             Options.showHelp();
         } else {
             if (options.trainingOptions.pretrainLayers && options.networkProperties.hiddenLayer2Size != 0) {
-                trainMultiLayerNetwork(options, maps, indexMap, numOutputs);
+                trainMultiLayerNetwork(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat,maps, numOutputs);
             } else {
-                train(options, maps, indexMap, numOutputs);
+                train(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat,maps, numOutputs);
             }
         }
     }
 
-    private static void trainMultiLayerNetwork(Options options, NNIndexMaps maps, IndexMap indexMap, int numOutputs) throws Exception {
+    private static void trainMultiLayerNetwork(Options options,ArrayList<String> trainSentencesInCONLLFormat,
+                                               ArrayList<String> devSentencesInCONLLFormat, NNIndexMaps maps, int numOutputs) throws Exception {
         Options oneLayerOption = options.clone();
         oneLayerOption.networkProperties.hiddenLayer2Size = 0;
         oneLayerOption.generalProperties.beamWidth = 1;
@@ -53,7 +61,7 @@ public class GreedyTrainer {
 
         if (options.trainingOptions.preTrainedModelPath.equals("")) {
             System.out.println("First training with one hidden layer!");
-            train(oneLayerOption, maps, indexMap, numOutputs);
+            train(oneLayerOption,trainSentencesInCONLLFormat, devSentencesInCONLLFormat, maps, numOutputs);
         }
 
         System.out.println("Loading model with one hidden layer!");
@@ -66,28 +74,31 @@ public class GreedyTrainer {
         System.out.println("Now Training with two layers!");
         Options twoLayerOptions = options.clone();
         twoLayerOptions.generalProperties.beamWidth = 1;
-        MLPNetwork net = constructMlpNetwork(twoLayerOptions, maps, indexMap, numOutputs);
+        MLPNetwork net = constructMlpNetwork(twoLayerOptions, maps, numOutputs);
         // Putting the first layer into it!
         net.layer(0).setLayer(mlpNetwork.layer(0));
-        trainNetwork(twoLayerOptions, net);
+        trainNetwork(twoLayerOptions, maps, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, net);
     }
 
-    private static void train(Options options, NNIndexMaps maps, IndexMap indexMap, int numOutputs) throws Exception {
+    private static void train(Options options,ArrayList<String> trainSentencesInCONLLFormat,
+                              ArrayList<String> devSentencesInCONLLFormat,
+                              NNIndexMaps maps, int numOutputs) throws Exception {
         Options greedyOptions = options.clone();
         greedyOptions.generalProperties.beamWidth = 1;
-        MLPNetwork mlpNetwork = constructMlpNetwork(greedyOptions, maps, indexMap, numOutputs);
-        trainNetwork(greedyOptions, mlpNetwork);
+        MLPNetwork mlpNetwork = constructMlpNetwork(greedyOptions, maps, numOutputs);
+        trainNetwork(greedyOptions, maps, trainSentencesInCONLLFormat, devSentencesInCONLLFormat,mlpNetwork);
     }
 
-    private static void trainNetwork(Options options, MLPNetwork mlpNetwork) throws Exception {
+    private static void trainNetwork(Options options, NNIndexMaps maps, ArrayList<String> trainSentencesInCONLLFormat,
+                                     ArrayList<String> devSentencesInCONLLFormat, MLPNetwork mlpNetwork) throws Exception {
         MLPNetwork avgMlpNetwork = mlpNetwork.clone(true, true);
 
-        GreedyTrainer trainer = new GreedyTrainer(options);
+        GreedyTrainer trainer = new GreedyTrainer(options, maps);
 
-        // todo
-        ArrayList<String> dataSet =null;
+        ArrayList<String> dataSet =trainSentencesInCONLLFormat;
 
-        ArrayList<NeuralTrainingInstance> allInstances = trainer.getNextInstances(dataSet, 0, dataSet.size(), 0);
+        boolean binary = mlpNetwork.getNumOutputs() ==2 ? true: false;
+        ArrayList<NeuralTrainingInstance> allInstances = Train.getNextInstances(dataSet, 0, dataSet.size(), mlpNetwork.maps, binary);
         mlpNetwork.maps.constructPreComputeMap(allInstances, mlpNetwork.getNumWordLayers(), 10000);
         mlpNetwork.resetPreComputeMap();
         avgMlpNetwork.resetPreComputeMap();
@@ -143,23 +154,15 @@ public class GreedyTrainer {
         neuralTrainer.shutDownLiveThreads();
     }
 
-    private static MLPNetwork constructMlpNetwork(Options options, NNIndexMaps maps, IndexMap indexMap, int numOutputs) throws Exception {
+    private static MLPNetwork constructMlpNetwork(Options options, NNIndexMaps maps, int numOutputs) throws Exception {
         int wDim = options.networkProperties.wDim;
         if (options.trainingOptions.wordEmbeddingFile.length() > 0)
-            wDim = maps.readEmbeddings(options.trainingOptions.wordEmbeddingFile, indexMap);
+            wDim = maps.readEmbeddings(options.trainingOptions.wordEmbeddingFile);
 
         System.out.println("Embedding dimension " + wDim);
-        return new MLPNetwork(maps, indexMap, options, wDim, options.networkProperties.posDim,
+        return new MLPNetwork(maps, options, wDim, options.networkProperties.posDim,
                 options.networkProperties.depDim,options.networkProperties.subcatDim, options.networkProperties.depPathDim,
                 options.networkProperties.posPathDim, options.networkProperties.positionDim, numOutputs);
     }
 
-    public ArrayList<NeuralTrainingInstance> getNextInstances(ArrayList<String> trainData, int start, int end, double dropWordProb)
-            throws Exception {
-        ArrayList<NeuralTrainingInstance> instances = new ArrayList<>();
-        for (int i = start; i < end; i++) {
-        //todo    addInstance(trainData.get(i), instances, dropWordProb);
-        }
-        return instances;
-    }
 }

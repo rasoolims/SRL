@@ -1,4 +1,4 @@
-package Sentence;
+package SentenceStructures;
 
 /**
  * Created by monadiab on 12/11/15.

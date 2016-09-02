@@ -15,7 +15,6 @@ import java.io.Serializable;
 public class TrainingOptions implements Serializable {
     public int trainingIter;
     public int preTrainingIter;
-    public int beamTrainingIter;
     public String clusterFile;
     public String wordEmbeddingFile;
     public boolean useMaxViol;
@@ -44,7 +43,6 @@ public class TrainingOptions implements Serializable {
         useRandomOracleSelection = false;
         trainingIter = 20000;
         preTrainingIter = 20000;
-        beamTrainingIter = 30000;
         UASEvalPerStep = 500;
         partialTrainingStartingIteration = 3;
         devPath = "";
@@ -53,12 +51,11 @@ public class TrainingOptions implements Serializable {
         preTrainedModelPath = "";
     }
 
-    private TrainingOptions(int trainingIter, int beamTrainingIter, String clusterFile, String wordEmbeddingFile, boolean useMaxViol, boolean
+    private TrainingOptions(int trainingIter,  String clusterFile, String wordEmbeddingFile, boolean useMaxViol, boolean
             useDynamicOracle, boolean useRandomOracleSelection, int UASEvalPerStep, int decayStep, AveragingOption averagingOption, int
                                     partialTrainingStartingIteration, int minFreq, String devPath, String trainFile, boolean considerAllActions,
                             String preTrainedModelPath, boolean pretrainLayers, int preTrainingIter) {
         this.trainingIter = trainingIter;
-        this.beamTrainingIter = beamTrainingIter;
         this.clusterFile = clusterFile;
         this.wordEmbeddingFile = wordEmbeddingFile;
         this.useMaxViol = useMaxViol;
@@ -89,7 +86,6 @@ public class TrainingOptions implements Serializable {
         builder.append("oracle: ").append(useDynamicOracle ? "dynamic" : "static").append("\n");
         builder.append("pre-training-iterations: ").append(preTrainingIter).append("\n");
         builder.append("training-iterations: ").append(trainingIter).append("\n");
-        builder.append("beam-training iterations: ").append(beamTrainingIter).append("\n");
         builder.append("partial training starting iteration: ").append(partialTrainingStartingIteration).append("\n");
         builder.append("decay step: ").append(decayStep).append("\n");
         builder.append("consider all actions: ").append(considerAllActions).append("\n");
@@ -99,7 +95,7 @@ public class TrainingOptions implements Serializable {
 
     @Override
     public TrainingOptions clone() {
-        return new TrainingOptions(trainingIter, beamTrainingIter, clusterFile, wordEmbeddingFile, useMaxViol, useDynamicOracle,
+        return new TrainingOptions(trainingIter,  clusterFile, wordEmbeddingFile, useMaxViol, useDynamicOracle,
                 useRandomOracleSelection, UASEvalPerStep, decayStep, averagingOption, partialTrainingStartingIteration, minFreq, devPath, trainFile,
                 considerAllActions, preTrainedModelPath, pretrainLayers, preTrainingIter);
     }
