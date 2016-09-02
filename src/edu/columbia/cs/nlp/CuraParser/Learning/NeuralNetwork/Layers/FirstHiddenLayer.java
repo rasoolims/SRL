@@ -180,7 +180,8 @@ public class FirstHiddenLayer extends Layer {
                 embedding = posPathEmbeddings;
             else embedding = positionEmbeddings;
 
-            if (saved != null && ((j >= numWordLayers && j<numWordLayers+numDepLayers+numPosLayers) || wordEmbeddings.isFrequent(j, tok))) {
+            if (saved != null && ((j >= numWordLayers && j<numWordLayers+numDepLayers+numPosLayers)
+                    || (j < numWordLayers && wordEmbeddings.isFrequent(j, tok)))) {
                 int id = tok;
                 if (j < numWordLayers)
                     id = wordEmbeddings.preComputeId(j, tok);

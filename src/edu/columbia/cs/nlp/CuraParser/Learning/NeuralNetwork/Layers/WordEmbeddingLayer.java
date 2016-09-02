@@ -30,7 +30,7 @@ public class WordEmbeddingLayer extends EmbeddingLayer {
 
     public boolean isFrequent(int index, int wordId) {
         if (precomputationMap == null) return false;
-        return precomputationMap[index].containsKey(wordId);
+            return precomputationMap[index].containsKey(wordId);
     }
 
     public int preComputeId(int index, int wordId) {
