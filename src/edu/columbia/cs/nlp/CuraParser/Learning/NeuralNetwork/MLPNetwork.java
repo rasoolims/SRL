@@ -41,9 +41,6 @@ public class MLPNetwork implements Serializable {
     int numPositionLayers;
 
     int numOutputs;
-    int wDim;
-    int pDim;
-    int depDim;
     private ArrayList<Layer> layers;
 
     public MLPNetwork(NNIndexMaps maps,   Options options,
@@ -51,9 +48,6 @@ public class MLPNetwork implements Serializable {
                       int numOutputs) {
         Random random = new Random();
         this.maps = maps;
-        this.wDim = wDim;
-        this.pDim = pDim;
-        this.depDim = lDim;
         this.numWordLayers = maps.numWordFeatures;
         this.numPosLayers = maps.numPosFeatures;
         this.numDepLayers = maps.numDepFeatures;
@@ -249,29 +243,5 @@ public class MLPNetwork implements Serializable {
              i < getNumWordLayers() + getNumPosLayers() + getNumDepLayers(); i++)
             savedGradients[i] = new double[numDepLabels][layer(0).nOut()];
         return savedGradients;
-    }
-
-    public int getwDim() {
-        return wDim;
-    }
-
-    public int getpDim() {
-        return pDim;
-    }
-
-    public int getDepDim() {
-        return depDim;
-    }
-
-    public final double[][] getWordEmbedding() {
-        return ((FirstHiddenLayer) layer(0)).getWordEmbeddings().getW();
-    }
-
-    public final double[][] getPosEmbedding() {
-        return ((FirstHiddenLayer) layer(0)).getPosEmbeddings().getW();
-    }
-
-    public final double[][] getDepEmbedding() {
-        return ((FirstHiddenLayer) layer(0)).getDepEmbeddings().getW();
     }
 }

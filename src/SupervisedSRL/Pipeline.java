@@ -29,13 +29,11 @@ public class Pipeline {
             GZIPInputStream gz1 = new GZIPInputStream(fos1);
             ObjectInput reader1 = new ObjectInputStream(gz1);
             MLPNetwork aiClassifier = (MLPNetwork) reader1.readObject();
-            Options infoptions1 = (Options) reader1.readObject();
 
             FileInputStream fos2 = new FileInputStream(options.generalProperties.modelDir + "/AC.model");
             GZIPInputStream gz2 = new GZIPInputStream(fos2);
             ObjectInput reader2 = new ObjectInputStream(gz2);
             MLPNetwork acClassifier = (MLPNetwork) reader2.readObject();
-            Options infoptions2 = (Options) reader2.readObject();
 
             // todo sure not working
             Decoder.decode(new Decoder(aiClassifier, acClassifier),
