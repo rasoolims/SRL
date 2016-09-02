@@ -220,7 +220,8 @@ public class FirstHiddenLayer extends Layer {
                 embedding = posPathEmbeddings;
             else embedding = positionEmbeddings;
 
-            if (saved != null && ((j >= numWordLayers && j<numWordLayers+numDepLayers+numPosLayers) || wordEmbeddings.isFrequent(j, tok))) {
+            if (saved != null && ((j >= numWordLayers && j < numWordLayers + numDepLayers + numPosLayers)
+                    || (j < numWordLayers && wordEmbeddings.isFrequent(j, tok)))) {
                 int id = tok;
                 if (j < numWordLayers)
                     id = wordEmbeddings.preComputeId(j, tok);
@@ -373,18 +374,18 @@ public class FirstHiddenLayer extends Layer {
             layer.getWordEmbeddings().setW(deepCopy ? Utils.clone(wordEmbeddings.getW()) : wordEmbeddings.getW());
             layer.getPosEmbeddings().setW(deepCopy ? Utils.clone(posEmbeddings.getW()) : posEmbeddings.getW());
             layer.getDepEmbeddings().setW(deepCopy ? Utils.clone(depEmbeddings.getW()) : depEmbeddings.getW());
-            layer.getDepEmbeddings().setW(deepCopy ? Utils.clone(subcatEmbeddings.getW()) : subcatEmbeddings.getW());
-            layer.getDepEmbeddings().setW(deepCopy ? Utils.clone(depPathEmbeddings.getW()) : depPathEmbeddings.getW());
-            layer.getDepEmbeddings().setW(deepCopy ? Utils.clone(posPathEmbeddings.getW()) : posPathEmbeddings.getW());
-            layer.getDepEmbeddings().setW(deepCopy ? Utils.clone(positionEmbeddings.getW()) : positionEmbeddings.getW());
+            layer.getSubcatEmbeddings().setW(deepCopy ? Utils.clone(subcatEmbeddings.getW()) : subcatEmbeddings.getW());
+            layer.getDepPathEmbeddings().setW(deepCopy ? Utils.clone(depPathEmbeddings.getW()) : depPathEmbeddings.getW());
+            layer.getPosPathEmbeddings().setW(deepCopy ? Utils.clone(posPathEmbeddings.getW()) : posPathEmbeddings.getW());
+            layer.getPositionEmbeddings().setW(deepCopy ? Utils.clone(positionEmbeddings.getW()) : positionEmbeddings.getW());
         } else {
             layer.getWordEmbeddings().setW(new double[wordEmbeddings.nOut()][wordEmbeddings.nIn()]);
             layer.getPosEmbeddings().setW(new double[posEmbeddings.nOut()][posEmbeddings.nIn()]);
             layer.getDepEmbeddings().setW(new double[depEmbeddings.nOut()][depEmbeddings.nIn()]);
-            layer.getWordEmbeddings().setW(new double[subcatEmbeddings.nOut()][subcatEmbeddings.nIn()]);
-            layer.getPosEmbeddings().setW(new double[depPathEmbeddings.nOut()][depPathEmbeddings.nIn()]);
-            layer.getDepEmbeddings().setW(new double[posPathEmbeddings.nOut()][posPathEmbeddings.nIn()]);
-            layer.getDepEmbeddings().setW(new double[positionEmbeddings.nOut()][positionEmbeddings.nIn()]);
+            layer.getSubcatEmbeddings().setW(new double[subcatEmbeddings.nOut()][subcatEmbeddings.nIn()]);
+            layer.getDepPathEmbeddings().setW(new double[depPathEmbeddings.nOut()][depPathEmbeddings.nIn()]);
+            layer.getPosPathEmbeddings().setW(new double[posPathEmbeddings.nOut()][posPathEmbeddings.nIn()]);
+            layer.getPositionEmbeddings().setW(new double[positionEmbeddings.nOut()][positionEmbeddings.nIn()]);
         }
         return layer;
     }

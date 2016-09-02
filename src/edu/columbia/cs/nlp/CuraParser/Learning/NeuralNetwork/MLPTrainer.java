@@ -11,7 +11,6 @@ import edu.columbia.cs.nlp.CuraParser.Learning.Updater.Enums.UpdaterType;
 import edu.columbia.cs.nlp.CuraParser.Structures.Enums.EmbeddingTypes;
 import edu.columbia.cs.nlp.CuraParser.Structures.NeuralTrainingInstance;
 import edu.columbia.cs.nlp.CuraParser.Structures.Pair;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -219,7 +218,12 @@ public class MLPTrainer {
                     double delta = savedGradients[index][id][h];
                     for (int k = 0; k < embedding.length; k++) {
                         g.modify(EmbeddingTypes.HIDDENLAYER, h, offset + k, delta * embedding[k]);
-                        g.modify(EmbeddingTypes.WORD, tok, k, delta * hiddenLayer[h][offset + k]);
+                        try {
+                            g.modify(EmbeddingTypes.WORD, tok, k, delta * hiddenLayer[h][offset + k]);
+                        } catch (Exception ex) {
+                            System.out.print("WHY!");
+                            g.modify(EmbeddingTypes.WORD, tok, k, delta * hiddenLayer[h][offset + k]);
+                        }
                     }
                 }
             }
