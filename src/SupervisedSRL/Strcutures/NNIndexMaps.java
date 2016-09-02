@@ -27,6 +27,7 @@ public class NNIndexMaps implements Serializable {
     public HashMap<Integer, Integer>[] preComputeMap;
     public HashMap<String, Integer> labelMap;
     public ArrayList<String> revLabel;
+    Random random;
 
     public int featDim;
     public int numWordFeatures;
@@ -42,7 +43,7 @@ public class NNIndexMaps implements Serializable {
     public static final int NullIndex = 0;
 
     
-    public NNIndexMaps() {
+    public NNIndexMaps(Random random) {
         wordFeatMap = new HashMap<>();
         posFeatMap = new HashMap<>();
         depFeatMap = new HashMap<>();
@@ -51,6 +52,7 @@ public class NNIndexMaps implements Serializable {
         posPathFeatMap = new HashMap<>();
         labelMap = new HashMap<>();
         revLabel = new ArrayList<>();
+        this.random = random;
     }
 
     public void addToMap(BaseFeatures baseFeatures){
@@ -112,31 +114,43 @@ public class NNIndexMaps implements Serializable {
         }
     }
 
-    public double[] features(BaseFeatures baseFeatures){
-       double[] feats = new double[featDim];
-        int i=0;
-        for(String wordFeat: baseFeatures.wordFeatures.features){
-              feats[i++] = word2int(wordFeat);
+    public double[] features(BaseFeatures baseFeatures, double dropout) {
+        double[] feats = new double[featDim];
+        int i = 0;
+        for (String wordFeat : baseFeatures.wordFeatures.features) {
+            if (random.nextDouble() < dropout)
+                feats[i++] = UnknownIndex;
+            else
+                feats[i++] = word2int(wordFeat);
         }
 
-        for(String posFeat: baseFeatures.posFeatures.features){
-            feats[i++] = pos2int(posFeat);
+        for (String posFeat : baseFeatures.posFeatures.features) {
+           feats[i++] = pos2int(posFeat);
         }
 
-        for(String depFeat: baseFeatures.dependencyFeatures.features){
-            feats[i++] = dep2int(depFeat);
+        for (String depFeat : baseFeatures.dependencyFeatures.features) {
+           feats[i++] = dep2int(depFeat);
         }
 
-        for(String subcatFeat: baseFeatures.subcatFeatures.features){
-            feats[i++] = subcat2int(subcatFeat);
+        for (String subcatFeat : baseFeatures.subcatFeatures.features) {
+            if (random.nextDouble() < dropout)
+                feats[i++] = UnknownIndex;
+            else
+                feats[i++] = subcat2int(subcatFeat);
         }
 
-        for(String depPath: baseFeatures.depRelPathFeatures.features){
-            feats[i++] = depPath2int(depPath);
+        for (String depPath : baseFeatures.depRelPathFeatures.features) {
+            if (random.nextDouble() < dropout)
+                feats[i++] = UnknownIndex;
+            else
+                feats[i++] = depPath2int(depPath);
         }
 
-        for(String posPath: baseFeatures.posPathFeatures.features){
-            feats[i++] = posPath2int(posPath);
+        for (String posPath : baseFeatures.posPathFeatures.features) {
+            if (random.nextDouble() < dropout)
+                feats[i++] = UnknownIndex;
+            else
+                feats[i++] = posPath2int(posPath);
         }
         feats[i++] = baseFeatures.positionFeatures.features.get(0);
 

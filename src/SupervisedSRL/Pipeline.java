@@ -6,6 +6,7 @@ import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.MLPNetwork;
 import java.io.FileInputStream;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
+import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -20,7 +21,7 @@ public class Pipeline {
        Options options =  Options.processArgs(args);
 
         if (options.generalProperties.train) {
-            String[] modelPaths = Train.train(options, options.trainingOptions.trainFile, options.trainingOptions.devPath,
+            String[] modelPaths = Train.train(new Random(),options, options.trainingOptions.trainFile, options.trainingOptions.devPath,
                     options.generalProperties.modelDir, numOfPDFeatures);
         } else if(options.generalProperties.parseConllFile){
             //stacked decoding

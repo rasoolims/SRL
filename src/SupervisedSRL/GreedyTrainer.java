@@ -103,9 +103,9 @@ public class GreedyTrainer {
         avgMlpNetwork.maps = maps;
         ArrayList<String> dataSet =trainSentencesInCONLLFormat;
         boolean binary = mlpNetwork.getNumOutputs() ==2 ? true: false;
-        ArrayList<NeuralTrainingInstance> allInstances = Train.getNextInstances(dataSet, 0, dataSet.size(), mlpNetwork.maps, binary);
+        ArrayList<NeuralTrainingInstance> allInstances = Train.getNextInstances(dataSet, 0, dataSet.size(), mlpNetwork.maps, binary, 0.05);
         ArrayList<NeuralTrainingInstance> devInstances = Train.getNextInstances(devSentencesInCONLLFormat, 0, devSentencesInCONLLFormat.size(),
-                                                            mlpNetwork.maps, binary);
+                                                            mlpNetwork.maps, binary, 0);
         mlpNetwork.maps.constructPreComputeMap(allInstances, mlpNetwork.getNumWordLayers(), 10000);
         mlpNetwork.resetPreComputeMap();
         avgMlpNetwork.resetPreComputeMap();
@@ -155,6 +155,8 @@ public class GreedyTrainer {
                     }
                 }
             }
+
+            allInstances = Train.getNextInstances(dataSet, 0, dataSet.size(), mlpNetwork.maps, binary, 0.05);
         }
 
         // if no eval, save the last

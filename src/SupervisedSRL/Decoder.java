@@ -151,7 +151,7 @@ public class Decoder {
         double[] labels = new double[2];
         // Gradual building of the beam
         for (int wordIdx = 1; wordIdx < sentenceWords.length; wordIdx++) {
-            double[] featVector = aiClassifier.maps.features(new BaseFeatures(pIdx, wordIdx, sentence));
+            double[] featVector = aiClassifier.maps.features(new BaseFeatures(pIdx, wordIdx, sentence),0);
             double score0 = Double.POSITIVE_INFINITY;
             double score1 = Double.NEGATIVE_INFINITY;
 
@@ -200,7 +200,7 @@ public class Decoder {
         double[] labels = new double[2];
         ArrayList<Integer> aiCandids = new ArrayList<>();
         for (int wordIdx = 1; wordIdx < sentenceWords.length; wordIdx++) {
-            double[] featVector = aiClassifier.maps.features(new BaseFeatures(pIdx, wordIdx, sentence));
+            double[] featVector = aiClassifier.maps.features(new BaseFeatures(pIdx, wordIdx, sentence),0);
             double[] scores = aiClassifier.output(featVector, labels);
             if (scores[0] > scores[1])
                 aiCandids.add(wordIdx);
@@ -224,7 +224,7 @@ public class Decoder {
             // Gradual building of the beam for the words identified as an argument by AI classifier
             for (int wordIdx : aiCandidate.second) {
                 // retrieve candidates for the current word
-                double[] featVector = acClassifier.maps.features(new BaseFeatures(pIdx, wordIdx, sentence));
+                double[] featVector = acClassifier.maps.features(new BaseFeatures(pIdx, wordIdx, sentence), 0);
                 double[] labelScores = new double[numOfLabels];
                 labelScores = acClassifier.output(featVector, labelScores);
 
@@ -271,7 +271,7 @@ public class Decoder {
         ArrayList<Integer> acCandids = new ArrayList<Integer>();
         for (int aiCandidIdx = 0; aiCandidIdx < aiCandidates.size(); aiCandidIdx++) {
             int wordIdx = aiCandidates.get(aiCandidIdx);
-            double[] featVector = acClassifier.maps.features(new BaseFeatures(pIdx, wordIdx, sentence));
+            double[] featVector = acClassifier.maps.features(new BaseFeatures(pIdx, wordIdx, sentence), 0);
             double[] labelScores = new double[numOfLabels];
             labelScores = acClassifier.output(featVector, labelScores);
             int predictedLabel = argmax(labelScores);

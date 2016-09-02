@@ -12,13 +12,14 @@ import util.IO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by Maryam Aminian on 5/23/16.
  */
 public class Train {
     public static ArrayList<NeuralTrainingInstance> getNextInstances(ArrayList<String> trainData, int start, int end, NNIndexMaps maps,
-                                                                     boolean binary)
+                                                                     boolean binary, double dropout)
             throws Exception {
         ArrayList<NeuralTrainingInstance> instances = new ArrayList<>();
         for (int i = start; i < end; i++) {
@@ -38,7 +39,7 @@ public class Train {
                         double[] label = new double[2];
                         label[isArg] = 1;
                         BaseFeatures baseFeatures = new BaseFeatures(pIdx, wordIdx, sentence);
-                        NeuralTrainingInstance instance = new NeuralTrainingInstance(maps.features(baseFeatures), label);
+                        NeuralTrainingInstance instance = new NeuralTrainingInstance(maps.features(baseFeatures, dropout), label);
                         instances.add(instance);
                     } else if (isArg == 1) {
                         double[] label = new double[maps.labelMap.size()];
@@ -49,7 +50,7 @@ public class Train {
                             label[0] = 1;
                         }
                         BaseFeatures baseFeatures = new BaseFeatures(pIdx, wordIdx, sentence);
-                        NeuralTrainingInstance instance = new NeuralTrainingInstance(maps.features(baseFeatures), label);
+                        NeuralTrainingInstance instance = new NeuralTrainingInstance(maps.features(baseFeatures, dropout), label);
                         instances.add(instance);
                     }
                 }
@@ -58,8 +59,8 @@ public class Train {
         return instances;
     }
 
-    public static NNIndexMaps createIndicesForNN(List<String> trainSentencesInCONLLFormat) throws Exception {
-        NNIndexMaps nnIndexMaps = new NNIndexMaps();
+    public static NNIndexMaps createIndicesForNN(Random random, List<String> trainSentencesInCONLLFormat) throws Exception {
+        NNIndexMaps nnIndexMaps = new NNIndexMaps(random);
         for (String sentenceInCONLLFormat : trainSentencesInCONLLFormat) {
             Sentence sentence = new Sentence(sentenceInCONLLFormat);
             ArrayList<PA> pas = sentence.getPredicateArguments().getPredicateArgumentsAsArray();
@@ -82,7 +83,7 @@ public class Train {
     }
 
     //this function is used to train stacked ai-ac models
-    public static String[] train(Options options, String trainData,
+    public static String[] train(Random random, Options options, String trainData,
                                  String devData,
                                  String modelDir,
                                  int numOfPDFeatures) throws Exception {
@@ -96,7 +97,7 @@ public class Train {
 
         //training PD module
         PD.train(trainSentencesInCONLLFormat, Pipeline.numOfPDTrainingIterations, modelDir, numOfPDFeatures);
-        NNIndexMaps nnIndexMaps = createIndicesForNN(trainSentencesInCONLLFormat);
+        NNIndexMaps nnIndexMaps = createIndicesForNN(random, trainSentencesInCONLLFormat);
 
         System.out.println("Training AI");
         aiModelPath = trainAI(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, nnIndexMaps, modelDir);
