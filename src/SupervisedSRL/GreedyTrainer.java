@@ -55,17 +55,25 @@ public class GreedyTrainer {
         oneLayerOption.generalProperties.beamWidth = 1;
 
         oneLayerOption.trainingOptions.trainingIter = options.trainingOptions.preTrainingIter;
+        MLPNetwork mlpNetwork = null;
         if (options.trainingOptions.preTrainedModelPath.equals("")) {
             System.out.println("First training with one hidden layer!");
-            train(oneLayerOption,trainSentencesInCONLLFormat, devSentencesInCONLLFormat, maps, numOutputs, modelPath);
-        }
+            train(oneLayerOption, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, maps, numOutputs, modelPath);
 
-        System.out.println("Loading model with one hidden layer!");
-        FileInputStream fos = new FileInputStream(modelPath);
-        GZIPInputStream gz = new GZIPInputStream(fos);
-        ObjectInput reader = new ObjectInputStream(gz);
-        MLPNetwork mlpNetwork = (MLPNetwork) reader.readObject();
-        reader.close();
+            System.out.println("Loading model with one hidden layer!");
+            FileInputStream fos = new FileInputStream(modelPath);
+            GZIPInputStream gz = new GZIPInputStream(fos);
+            ObjectInput reader = new ObjectInputStream(gz);
+            mlpNetwork = (MLPNetwork) reader.readObject();
+            reader.close();
+        }  else{
+            System.out.println("Loading pretrained model");
+            FileInputStream fos = new FileInputStream(modelPath);
+            GZIPInputStream gz = new GZIPInputStream(fos);
+            ObjectInput reader = new ObjectInputStream(gz);
+            mlpNetwork = (MLPNetwork) reader.readObject();
+            reader.close();
+        }
 
         System.out.println("Now Training with two layers!");
         Options twoLayerOptions = options.clone();
@@ -73,7 +81,10 @@ public class GreedyTrainer {
         MLPNetwork net = constructMlpNetwork(twoLayerOptions, maps, numOutputs);
         // Putting the first layer into it!
         net.layer(0).setLayer(mlpNetwork.layer(0));
-        trainNetwork(twoLayerOptions, maps, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, net,modelPath);
+        if(mlpNetwork.numLayers()>2){
+            net.layer(1).setLayer(mlpNetwork.layer(1));
+        }
+        trainNetwork(twoLayerOptions, maps, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, net, modelPath);
     }
 
     private static void train(Options options,ArrayList<String> trainSentencesInCONLLFormat,

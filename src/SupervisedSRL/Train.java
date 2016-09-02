@@ -97,7 +97,9 @@ public class Train {
         PD.train(trainSentencesInCONLLFormat, Pipeline.numOfPDTrainingIterations, modelDir, numOfPDFeatures);
         NNIndexMaps nnIndexMaps = createIndicesForNN(trainSentencesInCONLLFormat);
 
+        System.out.println("Training AI");
         aiModelPath = trainAI(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, nnIndexMaps, modelDir);
+        System.out.println("Training AC");
         acModelPath = trainAC(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, nnIndexMaps, modelDir);
         return new String[]{aiModelPath, aiMappingDictsPath, acModelPath, acMappingDictsPath};
     }
@@ -116,6 +118,8 @@ public class Train {
                                  NNIndexMaps maps, String modelDir)
             throws Exception {
 
+        String pretrainedPath = modelDir + "/AI.model";
+        options.trainingOptions.preTrainedModelPath = pretrainedPath;
         String modelPath = modelDir + "/AC.model";
         GreedyTrainer.trainWithNN(options, maps, maps.labelMap.size(), trainSentencesInCONLLFormat, devSentencesInCONLLFormat, modelPath);
         return modelPath;
