@@ -1,11 +1,8 @@
 package SupervisedSRL.Strcutures;
 
-import SentenceStructures.Argument;
-import SentenceStructures.PA;
-import SentenceStructures.Sentence;
 import SupervisedSRL.Features.BaseFeatures;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Utils;
-import edu.columbia.cs.nlp.CuraParser.Structures.*;
+import edu.columbia.cs.nlp.CuraParser.Structures.NeuralTrainingInstance;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -262,9 +259,8 @@ public class NNIndexMaps implements Serializable {
         embeddingsDictionary = null;
     }
 
-
     public void addLabel(String label) {
-        if(!labelMap.containsKey(labelMap)){
+        if (!labelMap.containsKey(label)) {
             int index = labelMap.size();
             labelMap.put(label, index);
             revLabel.add(label);

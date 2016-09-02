@@ -233,11 +233,7 @@ public class FirstHiddenLayer extends Layer {
             } else {
                 for (int i : hiddenToUSe) {
                     for (int k = 0; k < embedding.dim(); k++) {
-                        try {
                             hidden[i] += w[i][offset + k] * embedding.w(tok, k);
-                        }catch (Exception ex){
-                            System.out.println("WHY?");
-                        }
                     }
                 }
             }

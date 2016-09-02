@@ -218,12 +218,7 @@ public class MLPTrainer {
                     double delta = savedGradients[index][id][h];
                     for (int k = 0; k < embedding.length; k++) {
                         g.modify(EmbeddingTypes.HIDDENLAYER, h, offset + k, delta * embedding[k]);
-                        try {
                             g.modify(EmbeddingTypes.WORD, tok, k, delta * hiddenLayer[h][offset + k]);
-                        } catch (Exception ex) {
-                            System.out.print("WHY!");
-                            g.modify(EmbeddingTypes.WORD, tok, k, delta * hiddenLayer[h][offset + k]);
-                        }
                     }
                 }
             }

@@ -107,13 +107,7 @@ public class GreedyTrainer {
         int step;
         for (step = 0; step < options.trainingOptions.trainingIter; step++) {
             List<NeuralTrainingInstance> instances = Utils.getRandomSubset(allInstances, random, options.networkProperties.batchSize);
-            try {
                 neuralTrainer.fit(instances, step, step % (Math.max(1, options.trainingOptions.UASEvalPerStep / 10)) == 0);
-            } catch (Exception ex) {
-                System.err.println("Exception occurred: " + ex.getMessage());
-                ex.printStackTrace();
-                System.exit(1);
-            }
             if (options.updaterProperties.updaterType == UpdaterType.SGD) {
                 if ((step + 1) % options.trainingOptions.decayStep == 0) {
                     neuralTrainer.setLearningRate(0.96 * neuralTrainer.getLearningRate());
