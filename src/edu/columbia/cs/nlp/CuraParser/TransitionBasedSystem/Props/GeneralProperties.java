@@ -1,7 +1,5 @@
 package edu.columbia.cs.nlp.CuraParser.TransitionBasedSystem.Props;
 
-import edu.columbia.cs.nlp.CuraParser.TransitionBasedSystem.Parser.Enums.ParserType;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.Serializable;
@@ -32,7 +30,6 @@ public class GeneralProperties implements Serializable {
     public String outputFile;
     public int numOfThreads;
     public HashSet<String> punctuations;
-    public ParserType parserType;
     public boolean includePosAsUnknown;
 
 
@@ -52,14 +49,13 @@ public class GeneralProperties implements Serializable {
         evaluate = false;
         numOfThreads = 8;
         parsePartialConll = false;
-        parserType = ParserType.ArcStandard;
         initializePunctuations();
         includePosAsUnknown = true;
     }
 
     private GeneralProperties(boolean showHelp, boolean evaluate, boolean train, boolean parseTaggedFile, boolean parseConllFile, boolean
             parsePartialConll, boolean output, String modelFile, int beamWidth, boolean rootFirst, boolean labeled, boolean lowercase, String
-                                      inputFile, String outputFile, int numOfThreads, HashSet<String> punctuations, ParserType parserType, boolean
+                                      inputFile, String outputFile, int numOfThreads, HashSet<String> punctuations, boolean
             includePosAsUnknown) {
         this.showHelp = showHelp;
         this.evaluate = evaluate;
@@ -76,7 +72,6 @@ public class GeneralProperties implements Serializable {
         this.outputFile = outputFile;
         this.numOfThreads = numOfThreads;
         this.punctuations = punctuations;
-        this.parserType = parserType;
         this.includePosAsUnknown = includePosAsUnknown;
         this.output = output;
     }
@@ -125,7 +120,6 @@ public class GeneralProperties implements Serializable {
             builder.append("labeled: ").append(labeled).append("\n");
             builder.append("lower-case: ").append(lowercase).append("\n");
             builder.append("number of threads: ").append(numOfThreads).append("\n");
-            builder.append("parser type: ").append(parserType).append("\n");
         } else if (parseConllFile) {
             builder.append("parse conll" + "\n");
             builder.append("input file: ").append(inputFile).append("\n");
@@ -168,6 +162,6 @@ public class GeneralProperties implements Serializable {
     @Override
     public GeneralProperties clone() {
         return new GeneralProperties(showHelp, evaluate, train, parseTaggedFile, parseConllFile, parsePartialConll, output, modelFile, beamWidth,
-                rootFirst, labeled, lowercase, inputFile, outputFile, numOfThreads, punctuations, parserType, includePosAsUnknown);
+                rootFirst, labeled, lowercase, inputFile, outputFile, numOfThreads, punctuations, includePosAsUnknown);
     }
 }

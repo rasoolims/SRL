@@ -8,6 +8,7 @@ package edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork;
  * To report any bugs or problems contact rasooli@cs.columbia.edu
  */
 
+import SupervisedSRL.Strcutures.NNIndexMaps;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Options;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Utils;
 import edu.columbia.cs.nlp.CuraParser.Learning.Activation.*;
@@ -19,8 +20,6 @@ import edu.columbia.cs.nlp.CuraParser.Learning.WeightInit.Initializer;
 import edu.columbia.cs.nlp.CuraParser.Learning.WeightInit.XavierInit;
 import edu.columbia.cs.nlp.CuraParser.Learning.WeightInit.enums.WeightInit;
 import edu.columbia.cs.nlp.CuraParser.Structures.Enums.EmbeddingTypes;
-import edu.columbia.cs.nlp.CuraParser.Structures.IndexMaps;
-import edu.columbia.cs.nlp.CuraParser.TransitionBasedSystem.Parser.Enums.ParserType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -32,37 +31,24 @@ import java.util.Random;
 public class MLPNetwork implements Serializable {
     final public Options options;
     //todo try to get rid of this.
-    public IndexMaps maps;
+    public NNIndexMaps maps;
     int numWordLayers;
     int numPosLayers;
     int numDepLayers;
     int numOutputs;
-    int numDepLabels;
     int wDim;
     int pDim;
     int depDim;
-    ArrayList<Integer> depLabels;
     private ArrayList<Layer> layers;
 
-    public MLPNetwork(IndexMaps maps, Options options, ArrayList<Integer> depLabels, int wDim, int pDim, int lDim, ParserType parserType) {
+    public MLPNetwork(NNIndexMaps maps, Options options,
+                      int wDim, int pDim, int lDim, int subcatDim, int depPathDim, int posPathDim, int positionDim,
+                      int numOutputs) {
         Random random = new Random();
         this.maps = maps;
-
-        if (parserType == ParserType.ArcEager) {
-            numWordLayers = 22;
-            numPosLayers = 22;
-            numDepLayers = 11;
-        } else {
-            numWordLayers = 20;
-            numPosLayers = 20;
-            numDepLayers = 12;
-        }
         this.wDim = wDim;
         this.pDim = pDim;
         this.depDim = lDim;
-        int numWords = maps.vocabSize() + 2;
-        int numDepLabels = maps.relSize() + 2;
-        int numPos = maps.posSize() + 2;
         this.layers = new ArrayList<>();
         int nIn = numWordLayers * wDim + numPosLayers * pDim + numDepLayers * lDim;
 
@@ -73,7 +59,7 @@ public class MLPNetwork implements Serializable {
         Initializer hiddenBiasInitializer = WeightInit.initializer(hiddenBiasInit, random, nIn, options.networkProperties.hiddenLayer1Size, 0.2);
 
         Layer inputLayer = new FirstHiddenLayer(activation, nIn, options.networkProperties.hiddenLayer1Size, hiddenInitializer, hiddenBiasInitializer,
-                numWordLayers, numPosLayers, numDepLayers, random, maps.preComputeMap, numWords, numPos, numDepLabels, wDim, pDim, lDim,
+                maps, random, maps.preComputeMap, wDim, pDim, lDim, subcatDim, depPathDim, posPathDim, positionDim,
                 maps.getEmbeddingsDictionary());
 
         layers.add(inputLayer);
@@ -84,25 +70,20 @@ public class MLPNetwork implements Serializable {
         }
 
         int outputnIn = layers.get(layers.size() - 1).nOut();
-        numOutputs = 2 * (depLabels.size() + 1);
+        this.numOutputs = numOutputs;
         layers.add(new Layer(new LogisticSoftMax(), outputnIn, numOutputs, new XavierInit(random, outputnIn, numOutputs), new FixInit(0),
                 options.networkProperties.outputBiasTerm));
 
-        this.depLabels = depLabels;
-        this.numDepLabels = depLabels.size();
         this.options = options;
     }
 
-    public MLPNetwork(Options options, ArrayList<Layer> layers, int numWordLayers, int numPosLayers, int numDepLayers, int numOutputs,
-                      ArrayList<Integer> depLabels) {
+    public MLPNetwork(Options options, ArrayList<Layer> layers, int numWordLayers, int numPosLayers, int numDepLayers, int numOutputs) {
         this.options = options;
         this.layers = layers;
         this.numWordLayers = numWordLayers;
         this.numPosLayers = numPosLayers;
         this.numDepLayers = numDepLayers;
         this.numOutputs = numOutputs;
-        this.numDepLabels = depLabels.size();
-        this.depLabels = depLabels;
         this.maps = null;
     }
 
@@ -210,7 +191,7 @@ public class MLPNetwork implements Serializable {
         for (int l = 0; l < this.layers.size(); l++) {
             layers.add(this.layers.get(l).copy(zeroOut, deepCopy));
         }
-        MLPNetwork network = new MLPNetwork(options, layers, numWordLayers, numPosLayers, numDepLayers, numOutputs, depLabels);
+        MLPNetwork network = new MLPNetwork(options, layers, numWordLayers, numPosLayers, numDepLayers, numOutputs);
         ((FirstHiddenLayer) network.layer(0)).setPrecomputationMap(((FirstHiddenLayer) layer(0)).getPrecomputationMap());
         return network;
     }
@@ -229,14 +210,6 @@ public class MLPNetwork implements Serializable {
 
     public int getNumDepLayers() {
         return numDepLayers;
-    }
-
-    public int getNumDepLabels() {
-        return numDepLabels;
-    }
-
-    public ArrayList<Integer> getDepLabels() {
-        return depLabels;
     }
 
     public void preCompute() {

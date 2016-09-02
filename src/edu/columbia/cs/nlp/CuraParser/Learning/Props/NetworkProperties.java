@@ -28,9 +28,17 @@ public class NetworkProperties implements Serializable {
     public double reluLeakAlpha;
     public double rReluL;
     public double rReluU;
+    public int positionDim;
+    public int subcatDim;
+    public int depPathDim;
+    public int posPathDim;
 
     public NetworkProperties() {
         reluLeakAlpha = 5.5;
+        positionDim = 3;
+        subcatDim = 32;
+        depPathDim = 32;
+        posPathDim = 32;
         rReluL = 3;
         rReluU = 8;
         hiddenLayer1Size = 256;
@@ -49,7 +57,8 @@ public class NetworkProperties implements Serializable {
 
     private NetworkProperties(int hiddenLayer1Size, int hiddenLayer2Size, int posDim, int depDim, int wDim, int batchSize, int beamBatchSize, double
             dropoutProbForHiddenLayer, ActivationType activationType, double regularization, boolean outputBiasTerm, boolean regualarizeAllLayers,
-                              double reluLeakAlpha, double rReluL, double rReluU) {
+                              double reluLeakAlpha, double rReluL, double rReluU,
+                              int subcatDim, int depPathDim, int posPathDim, int positionDim) {
         this.hiddenLayer1Size = hiddenLayer1Size;
         this.hiddenLayer2Size = hiddenLayer2Size;
         this.posDim = posDim;
@@ -65,6 +74,10 @@ public class NetworkProperties implements Serializable {
         this.reluLeakAlpha = reluLeakAlpha;
         this.rReluL = rReluL;
         this.rReluU = rReluU;
+        this.subcatDim = subcatDim;
+        this.posPathDim = posPathDim;
+        this.depPathDim = depPathDim;
+        this.positionDim = positionDim;
     }
 
     @Override
@@ -88,6 +101,7 @@ public class NetworkProperties implements Serializable {
     @Override
     public NetworkProperties clone() {
         return new NetworkProperties(hiddenLayer1Size, hiddenLayer2Size, posDim, depDim, wDim, batchSize, beamBatchSize, dropoutProbForHiddenLayer,
-                activationType, regularization, outputBiasTerm, regualarizeAllLayers, reluLeakAlpha, rReluL, rReluU);
+                activationType, regularization, outputBiasTerm, regualarizeAllLayers, reluLeakAlpha, rReluL, rReluU,
+                subcatDim, depPathDim, posPathDim, positionDim);
     }
 }

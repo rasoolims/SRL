@@ -12,7 +12,6 @@ import edu.columbia.cs.nlp.CuraParser.Learning.Props.UpdaterProperties;
 import edu.columbia.cs.nlp.CuraParser.Learning.Updater.Enums.AveragingOption;
 import edu.columbia.cs.nlp.CuraParser.Learning.Updater.Enums.SGDType;
 import edu.columbia.cs.nlp.CuraParser.Learning.Updater.Enums.UpdaterType;
-import edu.columbia.cs.nlp.CuraParser.TransitionBasedSystem.Parser.Enums.ParserType;
 import edu.columbia.cs.nlp.CuraParser.TransitionBasedSystem.Props.GeneralProperties;
 import edu.columbia.cs.nlp.CuraParser.TransitionBasedSystem.Props.TrainingOptions;
 
@@ -199,14 +198,7 @@ public class Options implements Serializable {
                     options.networkProperties.activationType = ActivationType.CUBIC;
                 else
                     throw new Exception("updater not supported");
-            } else if (args[i].equals("-parser")) {
-                if (args[i + 1].equals("ae"))
-                    options.generalProperties.parserType = ParserType.ArcEager;
-                else if (args[i + 1].equals("as"))
-                    options.generalProperties.parserType = ParserType.ArcStandard;
-                else
-                    throw new Exception("parser not supported");
-            } else if (args[i].equals("-sgd")) {
+            }  else if (args[i].equals("-sgd")) {
                 if (args[i + 1].equals("nesterov"))
                     options.updaterProperties.sgdType = SGDType.NESTEROV;
                 else if (args[i + 1].equals("momentum"))

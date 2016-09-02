@@ -8,6 +8,7 @@ package edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.Layers;
  * To report any bugs or problems contact rasooli@cs.columbia.edu
  */
 
+import SupervisedSRL.Strcutures.NNIndexMaps;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Utils;
 import edu.columbia.cs.nlp.CuraParser.Learning.Activation.Activation;
 import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.MLPNetwork;
@@ -27,32 +28,77 @@ public class FirstHiddenLayer extends Layer {
     WordEmbeddingLayer wordEmbeddings;
     EmbeddingLayer posEmbeddings;
     EmbeddingLayer depEmbeddings;
+    EmbeddingLayer subcatEmbeddings;
+    EmbeddingLayer depPathEmbeddings;
+    EmbeddingLayer posPathEmbeddings;
+    EmbeddingLayer positionEmbeddings;
+
     int numWordLayers;
     int numPosLayers;
     int numDepLayers;
+    int numSubcatLayers;
+    int numDepPathLayers;
+    int numPosPathLayers;
+    int numPositionLayers;
 
     // pre-computed items.
     private double[][][] saved;
 
     public FirstHiddenLayer(Activation activation, int nIn, int nOut, Initializer initializer, Initializer biasInit,
-                            int numWordLayers, int numPosLayers, int numDepLayers,
+                            NNIndexMaps nnIndexMaps,
                             Random random, HashMap<Integer, Integer>[] precomputationMap,
-                            int numW, int numPos, int numDep,
-                            int wDim, int posDim, int depDim,
+                            int wDim, int posDim, int depDim, int subcatDim, int depPathDim, int posPathDim, int positionDim,
                             HashMap<Integer, double[]> embeddingsDictionary) {
         super(activation, nIn, nOut, initializer, biasInit);
-        this.wordEmbeddings = new WordEmbeddingLayer(wDim, numW, random, precomputationMap);
+        this.wordEmbeddings = new WordEmbeddingLayer(wDim, nnIndexMaps.wordFeatMap.size(), random, precomputationMap);
+        this.posEmbeddings = new EmbeddingLayer(posDim, nnIndexMaps.posFeatMap.size(), random);
+        this.depEmbeddings = new EmbeddingLayer(depDim, nnIndexMaps.depFeatMap.size(), random);
+        this.subcatEmbeddings = new EmbeddingLayer(subcatDim, nnIndexMaps.subcatFeatMap.size(), random);
+        this.depPathEmbeddings = new EmbeddingLayer(depPathDim, nnIndexMaps.depPathFeatMap.size(), random);
+        this.posPathEmbeddings = new EmbeddingLayer(posPathDim, nnIndexMaps.posPathFeatMap.size(), random);
+        this.positionEmbeddings = new EmbeddingLayer(positionDim, 3, random);
 
-        this.posEmbeddings = new EmbeddingLayer(posDim, numPos, random);
-        this.depEmbeddings = new EmbeddingLayer(depDim, numDep, random);
-        this.numWordLayers = numWordLayers;
-        this.numPosLayers = numPosLayers;
-        this.numDepLayers = numDepLayers;
+        this.numWordLayers = nnIndexMaps.numWordFeatures;
+        this.numPosLayers = nnIndexMaps.numPosFeatures;
+        this.numDepLayers = nnIndexMaps.numDepFeatures;
+        this.numSubcatLayers=nnIndexMaps.numSubcatFeatures;
+        this.numDepPathLayers=nnIndexMaps.numDepPathFeatures;
+        this.numPosPathLayers=nnIndexMaps.numPosPathFeatures;
+        this.numPositionLayers=1;
+
         this.wordEmbeddings.addPretrainedVectors(embeddingsDictionary);
         if (getPrecomputationMap() != null) {
             assert wordEmbeddings.numOfEmbeddingSlot() == numWordLayers;
             preCompute();
         }
+    }
+
+
+    public FirstHiddenLayer(Activation activation, int nIn, int nOut, Initializer initializer, Initializer biasInit,
+                            int numWordLayers, int numPosLayers, int numDepLayers, int numSubcatLayers, int numDepPathLayers,
+                            int numPosPathLayers,  int numPositionLayers,
+                            Random random, HashMap<Integer, Integer>[] precomputationMap,
+                            int numW, int numPos, int numDep, int numSubcat, int numDepPath, int numPosPath,
+                            int wDim, int posDim, int depDim, int subcatDim, int depPathDim, int posPathDim, int positionDim,
+                            HashMap<Integer, double[]> embeddingsDictionary) {
+        super(activation, nIn, nOut, initializer, biasInit);
+
+        this.wordEmbeddings = new WordEmbeddingLayer(wDim, numW, random, precomputationMap);
+        this.posEmbeddings = new EmbeddingLayer(posDim, numPos, random);
+        this.depEmbeddings = new EmbeddingLayer(depDim, numDep, random);
+        this.subcatEmbeddings = new EmbeddingLayer(subcatDim, numSubcat, random);
+        this.depPathEmbeddings = new EmbeddingLayer(depPathDim, numDepPath, random);
+        this.posPathEmbeddings = new EmbeddingLayer(posPathDim,numPosPath, random);
+        this.positionEmbeddings = new EmbeddingLayer(positionDim, 3, random);
+
+        this.numWordLayers = numWordLayers;
+        this.numPosLayers = numPosLayers;
+        this.numDepLayers =numDepLayers;
+        this.numSubcatLayers=numSubcatLayers;
+        this.numDepPathLayers=numDepPathLayers;
+        this.numPosPathLayers=numPosPathLayers;
+        this.numPositionLayers=numPositionLayers;
+
     }
 
     public void preCompute() {
@@ -224,9 +270,14 @@ public class FirstHiddenLayer extends Layer {
 
     @Override
     public Layer copy(boolean zeroOut, boolean deepCopy) {
-        FirstHiddenLayer layer = new FirstHiddenLayer(activation, w[0].length, w.length, new FixInit(0), new FixInit(0), numWordLayers, numPosLayers,
-                numDepLayers, new Random(), null, wordEmbeddings.vocabSize(), posEmbeddings.vocabSize(), depEmbeddings.vocabSize(),
-                wordEmbeddings.dim(), posEmbeddings.dim(), depEmbeddings.dim(), null);
+        FirstHiddenLayer layer = new FirstHiddenLayer(activation, w[0].length, w.length, new FixInit(0), new FixInit(0),
+                numWordLayers, numPosLayers, numDepLayers, numSubcatLayers, numDepPathLayers, numPosPathLayers, numPositionLayers,
+                new Random(), null,
+                wordEmbeddings.vocabSize(), posEmbeddings.vocabSize(), depEmbeddings.vocabSize(),
+                subcatEmbeddings.vocabSize(), depPathEmbeddings.vocabSize(), posPathEmbeddings.vocabSize(),
+                wordEmbeddings.dim(), posEmbeddings.dim(), depEmbeddings.dim(),
+                subcatEmbeddings.dim(), depPathEmbeddings.dim(), posPathEmbeddings.dim(),  posEmbeddings.dim(),
+                null);
         if (!zeroOut) {
             layer.setW(deepCopy ? Utils.clone(w) : w);
             layer.setB(deepCopy ? Utils.clone(b) : b);
