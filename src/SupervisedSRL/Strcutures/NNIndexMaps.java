@@ -7,6 +7,7 @@ import edu.columbia.cs.nlp.CuraParser.Structures.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.TreeMap;
  * To report any bugs or problems contact rasooli@cs.columbia.edu
  */
 
-public class NNIndexMaps {
+public class NNIndexMaps implements Serializable {
     public HashMap<Integer, Integer> wordFeatMap;
     public HashMap<Integer, Integer> posFeatMap;
     public HashMap<Integer, Integer> depFeatMap;

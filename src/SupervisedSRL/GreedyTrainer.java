@@ -18,7 +18,6 @@ import edu.columbia.cs.nlp.CuraParser.Structures.NeuralTrainingInstance;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
@@ -150,7 +149,7 @@ public class GreedyTrainer {
             wDim = maps.readEmbeddings(options.trainingOptions.wordEmbeddingFile, indexMap);
 
         System.out.println("Embedding dimension " + wDim);
-        return new MLPNetwork(maps, options, wDim, options.networkProperties.posDim,
+        return new MLPNetwork(maps, indexMap, options, wDim, options.networkProperties.posDim,
                 options.networkProperties.depDim,options.networkProperties.subcatDim, options.networkProperties.depPathDim,
                 options.networkProperties.posPathDim, options.networkProperties.positionDim, numOutputs);
     }

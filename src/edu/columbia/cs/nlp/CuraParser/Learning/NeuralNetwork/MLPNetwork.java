@@ -8,6 +8,7 @@ package edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork;
  * To report any bugs or problems contact rasooli@cs.columbia.edu
  */
 
+import SupervisedSRL.Strcutures.IndexMap;
 import SupervisedSRL.Strcutures.NNIndexMaps;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Options;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Utils;
@@ -32,6 +33,7 @@ public class MLPNetwork implements Serializable {
     final public Options options;
     //todo try to get rid of this.
     public NNIndexMaps maps;
+    public IndexMap indexMaps;
     int numWordLayers;
     int numPosLayers;
     int numDepLayers;
@@ -41,11 +43,12 @@ public class MLPNetwork implements Serializable {
     int depDim;
     private ArrayList<Layer> layers;
 
-    public MLPNetwork(NNIndexMaps maps, Options options,
+    public MLPNetwork(NNIndexMaps maps,  IndexMap indexMaps, Options options,
                       int wDim, int pDim, int lDim, int subcatDim, int depPathDim, int posPathDim, int positionDim,
                       int numOutputs) {
         Random random = new Random();
         this.maps = maps;
+        this.indexMaps = indexMaps;
         this.wDim = wDim;
         this.pDim = pDim;
         this.depDim = lDim;
