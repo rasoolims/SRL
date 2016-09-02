@@ -68,7 +68,7 @@ public class GreedyTrainer {
             reader.close();
         }  else{
             System.out.println("Loading pretrained model");
-            FileInputStream fos = new FileInputStream(modelPath);
+            FileInputStream fos = new FileInputStream(options.trainingOptions.preTrainedModelPath);
             GZIPInputStream gz = new GZIPInputStream(fos);
             ObjectInput reader = new ObjectInputStream(gz);
             mlpNetwork = (MLPNetwork) reader.readObject();
