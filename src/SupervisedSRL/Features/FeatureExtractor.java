@@ -159,7 +159,7 @@ public class FeatureExtractor {
         return new Object[]{seqOfCoreArgumentLabels.trim()};
     }
 
-    private static String getDepSubCat(int pIdx, TreeSet<Integer>[] sentenceReverseDepHeads,
+    public static String getDepSubCat(int pIdx, TreeSet<Integer>[] sentenceReverseDepHeads,
                                        int[] sentenceDepLabels, int[] posTags, IndexMap indexMap) throws Exception {
         StringBuilder subCat = new StringBuilder();
         if (sentenceReverseDepHeads[pIdx] != null) {
@@ -175,7 +175,7 @@ public class FeatureExtractor {
         return subCat.toString().trim();
     }
 
-    private static String getChildSet(int pIdx, TreeSet<Integer>[] sentenceReverseDepHeads,
+    public static String getChildSet(int pIdx, TreeSet<Integer>[] sentenceReverseDepHeads,
                                       int[] collection, int[] posTags, IndexMap map) throws Exception {
         StringBuilder childSet = new StringBuilder();
         TreeSet<Integer> children = new TreeSet<Integer>();
@@ -194,7 +194,7 @@ public class FeatureExtractor {
         return childSet.toString().trim();
     }
 
-    private static int getLeftMostDependentIndex(int aIdx, TreeSet<Integer>[] sentenceReverseDepHeads) {
+    public static int getLeftMostDependentIndex(int aIdx, TreeSet<Integer>[] sentenceReverseDepHeads) {
         if (sentenceReverseDepHeads[aIdx] != null) {
             //this argument has at least one child
             int firstChild = sentenceReverseDepHeads[aIdx].first();
@@ -206,7 +206,7 @@ public class FeatureExtractor {
         return IndexMap.nullIdx;
     }
 
-    private static int getRightMostDependentIndex(int aIdx, TreeSet<Integer>[] sentenceReverseDepHeads) {
+    public static int getRightMostDependentIndex(int aIdx, TreeSet<Integer>[] sentenceReverseDepHeads) {
         if (sentenceReverseDepHeads[aIdx] != null) {
             int last = sentenceReverseDepHeads[aIdx].last();
             if (last > aIdx) {
@@ -216,7 +216,7 @@ public class FeatureExtractor {
         return IndexMap.nullIdx;
     }
 
-    private static int getLeftSiblingIndex(int aIdx, int parIdx, TreeSet<Integer>[] sentenceReverseDepHeads) {
+    public static int getLeftSiblingIndex(int aIdx, int parIdx, TreeSet<Integer>[] sentenceReverseDepHeads) {
         TreeSet<Integer> argSiblings = new TreeSet<Integer>();
         if (sentenceReverseDepHeads[parIdx] != null) {
             argSiblings = sentenceReverseDepHeads[parIdx];
@@ -227,7 +227,7 @@ public class FeatureExtractor {
         return IndexMap.nullIdx;
     }
 
-    private static int getRightSiblingIndex(int aIdx, int parIdx, TreeSet<Integer>[] sentenceReverseDepHeads) {
+    public static int getRightSiblingIndex(int aIdx, int parIdx, TreeSet<Integer>[] sentenceReverseDepHeads) {
         TreeSet<Integer> argSiblings = new TreeSet<Integer>();
         if (sentenceReverseDepHeads[parIdx] != null)
             argSiblings = sentenceReverseDepHeads[parIdx];
@@ -1310,7 +1310,7 @@ public class FeatureExtractor {
     }
 
 
-    private static class BaseFeatureFields {
+    public static class BaseFeatureFields {
         private int pIdx;
         private int aIdx;
         private Sentence sentence;

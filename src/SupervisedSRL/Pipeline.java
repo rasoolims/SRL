@@ -59,6 +59,9 @@ public class Pipeline {
         ClassifierType classifierType = ClassifierType.AveragedPerceptron;
         switch (learnerType)
         {
+            case(0):
+                classifierType= ClassifierType.NN;
+                break;
             case(1):
                 classifierType= ClassifierType.AveragedPerceptron;
                 break;
@@ -118,7 +121,12 @@ public class Pipeline {
                 }
             } else {
                 //stacked decoding
-                if (classifierType == ClassifierType.AveragedPerceptron) {
+                if (classifierType == ClassifierType.NN) {
+                    modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
+                            numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
+                            ClassifierType.NN, greedy, numOfThreads);
+
+                }  else if (classifierType == ClassifierType.AveragedPerceptron) {
                     modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
                             numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
                             ClassifierType.AveragedPerceptron, greedy, numOfThreads);

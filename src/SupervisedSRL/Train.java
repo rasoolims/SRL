@@ -3,6 +3,7 @@ package SupervisedSRL;
 import Sentence.Argument;
 import Sentence.PA;
 import Sentence.Sentence;
+import SupervisedSRL.Features.BaseFeatures;
 import SupervisedSRL.Features.FeatureExtractor;
 import SupervisedSRL.PD.PD;
 import SupervisedSRL.Strcutures.*;
@@ -44,15 +45,20 @@ public class Train {
 
         //training PD module
         PD.train(trainSentencesInCONLLFormat, indexMap, Pipeline.numOfPDTrainingIterations, modelDir, numOfPDFeatures);
-
-        if (classifierType == ClassifierType.AveragedPerceptron)
+        if(classifierType == ClassifierType.NN) {
+            NNIndexMaps nnIndexMaps = createAIIndicesForNN(trainSentencesInCONLLFormat, indexMap);
+            aiModelPath = trainAI(trainSentencesInCONLLFormat, devSentencesInCONLLFormat, indexMap,
+                    numberOfTrainingIterations, modelDir, numOfAIFeatures, numOfPDFeatures, aiMaxBeamSize, greedy);
+            acModelPath = trainAC(trainSentencesInCONLLFormat, devData, argLabels, indexMap,
+                    numberOfTrainingIterations, modelDir, numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
+                    aiMaxBeamSize, acMaxBeamSize, greedy);
+        } else if (classifierType == ClassifierType.AveragedPerceptron)
         {
             aiModelPath = trainAI(trainSentencesInCONLLFormat, devSentencesInCONLLFormat, indexMap,
                     numberOfTrainingIterations, modelDir, numOfAIFeatures, numOfPDFeatures, aiMaxBeamSize, greedy);
             acModelPath = trainAC(trainSentencesInCONLLFormat, devData, argLabels, indexMap,
                     numberOfTrainingIterations, modelDir, numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
                     aiMaxBeamSize, acMaxBeamSize, greedy);
-
         }else if (classifierType == ClassifierType.Liblinear) {
             String[] aiModelFeatDicPath = trainLiblinear(trainSentencesInCONLLFormat, devSentencesInCONLLFormat, "AI",
                     indexMap, modelDir, numOfAIFeatures);
@@ -536,6 +542,26 @@ public class Train {
         return new String[]{modelPath,mappingDictsPath};
     }
 
+
+    public static NNIndexMaps createAIIndicesForNN(List<String> trainSentencesInCONLLFormat,  IndexMap indexMap) throws Exception {
+        NNIndexMaps nnIndexMaps = new NNIndexMaps();
+        for (String sentenceInCONLLFormat : trainSentencesInCONLLFormat) {
+            Sentence sentence = new Sentence(sentenceInCONLLFormat, indexMap);
+            ArrayList<PA> pas = sentence.getPredicateArguments().getPredicateArgumentsAsArray();
+            int[] sentenceWords = sentence.getWords();
+
+            for (PA pa : pas) {
+                int pIdx = pa.getPredicateIndex();
+                ArrayList<Argument> currentArgs = pa.getArguments();
+
+                for (int wordIdx = 1; wordIdx < sentenceWords.length; wordIdx++) {
+                 BaseFeatures baseFeatures = new BaseFeatures(pIdx, wordIdx, sentence, indexMap);
+                 nnIndexMaps.addToMap(baseFeatures);
+                }
+            }
+        }
+        return nnIndexMaps;
+    }
 
     public static String trainAI(List<String> trainSentencesInCONLLFormat,
                            List<String> devSentencesInCONLLFormat,
