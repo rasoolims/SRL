@@ -1,6 +1,5 @@
 package SupervisedSRL;
 
-import SupervisedSRL.Strcutures.ClassifierType;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Options;
 import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.MLPNetwork;
 
@@ -39,8 +38,8 @@ public class Pipeline {
             Decoder.decode(new Decoder(aiClassifier, acClassifier),
                     options.generalProperties.inputFile, acClassifier.maps.revLabel,
                     options.generalProperties.beamWidth, options.generalProperties.beamWidth, numOfPDFeatures,
-                    options.generalProperties.modelDir, options.generalProperties.outputFile, null, null, ClassifierType.AveragedPerceptron,
-                    options.generalProperties.beamWidth==1? true:false);
+                    options.generalProperties.modelDir, options.generalProperties.outputFile,
+                    options.generalProperties.beamWidth == 1 ? true : false, acClassifier.maps);
 
             // todo sure not working
             Evaluation.evaluate(options.generalProperties.outputFile, options.generalProperties.inputFile, acClassifier.maps.labelMap);

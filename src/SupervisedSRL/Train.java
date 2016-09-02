@@ -4,18 +4,13 @@ import SentenceStructures.Argument;
 import SentenceStructures.PA;
 import SentenceStructures.Sentence;
 import SupervisedSRL.Features.BaseFeatures;
-import SupervisedSRL.Features.FeatureExtractor;
 import SupervisedSRL.PD.PD;
-import SupervisedSRL.Strcutures.*;
+import SupervisedSRL.Strcutures.NNIndexMaps;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Options;
-import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.MLPNetwork;
 import edu.columbia.cs.nlp.CuraParser.Structures.NeuralTrainingInstance;
-import ml.AveragedPerceptron;
 import util.IO;
 
-import java.awt.*;
-import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -73,7 +68,8 @@ public class Train {
                     BaseFeatures baseFeatures = new BaseFeatures(pIdx, wordIdx, sentence);
                     String arg = isArgument(wordIdx, currentArgs);
                     nnIndexMaps.addToMap(baseFeatures);
-                    nnIndexMaps.addLabel(arg);
+                    if (!arg.equals(""))
+                        nnIndexMaps.addLabel(arg);
                 }
             }
         }

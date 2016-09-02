@@ -2,16 +2,16 @@ package SupervisedSRL;
 
 import SentenceStructures.Sentence;
 import SupervisedSRL.Features.BaseFeatures;
-import SupervisedSRL.Features.FeatureExtractor;
 import SupervisedSRL.PD.PD;
 import SupervisedSRL.Strcutures.*;
-import com.sun.xml.internal.rngom.parse.host.Base;
 import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.MLPNetwork;
-import ml.AveragedPerceptron;
 import util.IO;
 
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Created by Maryam Aminian on 5/24/16.
@@ -37,11 +37,7 @@ public class Decoder {
     //stacked decoding
     public static void decode(Decoder decoder, String devDataPath, ArrayList<String> labelMap,
                               int aiMaxBeamSize, int acMaxBeamSize,
-                              int numOfPDFeatures,
-                              String modelDir, String outputFile,
-                              HashMap<Object, Integer>[] aiFeatDict,
-                              HashMap<Object, Integer>[] acFeatDict,
-                              ClassifierType classifierType, boolean greedy) throws Exception {
+                              int numOfPDFeatures, String modelDir, String outputFile, boolean greedy, NNIndexMaps maps) throws Exception {
 
         DecimalFormat format = new DecimalFormat("##.00");
 
@@ -60,11 +56,11 @@ public class Decoder {
             Sentence sentence = new Sentence(devSentence);
 
             predictions[d] = (TreeMap<Integer, Prediction>) decoder.predict(sentence, aiMaxBeamSize, acMaxBeamSize,
-                    numOfPDFeatures, modelDir,aiFeatDict,acFeatDict, classifierType, greedy, false);
+                    numOfPDFeatures, modelDir, greedy, maps);
 
             sentencesToWriteOutputFile.add(IO.getSentenceForOutput(devSentence));
         }
-        IO.writePredictionsInCoNLLFormat(sentencesToWriteOutputFile, predictions, labelMap, outputFile);
+        IO.writePredictionsInCoNLLFormat(sentencesToWriteOutputFile, predictions, outputFile);
         long endTime = System.currentTimeMillis();
         System.out.println("Total time for decoding: " + format.format(((endTime - startTime) / 1000.0) / 60.0));
     }
@@ -83,7 +79,7 @@ public class Decoder {
             String pLabel = predictedPredicates.get(pIdx);
             ArrayList<Pair<Double, ArrayList<Integer>>> aiCandidates = new ArrayList();
             ArrayList<Integer> aiCandidatesGreedy= new ArrayList<Integer>();
-            HashMap<Integer, Integer> highestScorePrediction= new HashMap<Integer, Integer>();
+            HashMap<Integer, String> highestScorePrediction = new HashMap<>();
 
             if (!greedy)
             {
@@ -94,7 +90,7 @@ public class Decoder {
                 aiCandidatesGreedy = getBestAICandidatesGreedy(sentence, pIdx);
                 for (int idx=0; idx< aiCandidatesGreedy.size(); idx++) {
                     int wordIdx = aiCandidatesGreedy.get(idx);
-                    highestScorePrediction.put(wordIdx, 1);
+                    highestScorePrediction.put(wordIdx, "1");
                 }
             }
 
@@ -106,12 +102,10 @@ public class Decoder {
 
 
     public Object predict(Sentence sentence, int aiMaxBeamSize,
-                                                int acMaxBeamSize,
-                                                int numOfPDFeatures, String modelDir,
-                                                HashMap<Object, Integer>[] aiFeatDict,
-                                                HashMap<Object, Integer>[] acFeatDict,
-                                                ClassifierType classifierType,
-                                                boolean greedy, boolean use4Reranker) throws Exception {
+                          int acMaxBeamSize,
+                          int numOfPDFeatures, String modelDir,
+                          boolean greedy,
+                          NNIndexMaps maps) throws Exception {
 
         HashMap<Integer, String> predictedPredicates = PD.predict(sentence, modelDir, numOfPDFeatures);
         TreeMap<Integer, Prediction> predictedPAs = new TreeMap<Integer, Prediction>();
@@ -119,43 +113,32 @@ public class Decoder {
         for (int pIdx : predictedPredicates.keySet()) {
             // get best k argument assignment candidates
             String pLabel = predictedPredicates.get(pIdx);
-            ArrayList<Pair<Double, ArrayList<Integer>>> aiCandidates= new ArrayList();
-            ArrayList<ArrayList<Pair<Double, ArrayList<Integer>>>> acCandidates= new ArrayList();
+            ArrayList<Pair<Double, ArrayList<Integer>>> aiCandidates = new ArrayList();
+            ArrayList<ArrayList<Pair<Double, ArrayList<Integer>>>> acCandidates = new ArrayList();
 
             ArrayList<Integer> aiCandidatesGreedy = new ArrayList<Integer>();
             ArrayList<Integer> acCandidatesGreedy = new ArrayList<Integer>();
-            HashMap<Integer, Integer> highestScorePrediction = new HashMap<Integer, Integer>();
+            HashMap<Integer, String> highestScorePrediction = new HashMap<>();
 
 
-            if (!greedy)
-            {
+            if (!greedy) {
                 aiCandidates = getBestAICandidates(sentence, pIdx, aiMaxBeamSize);
                 acCandidates = getBestACCandidates(sentence, pIdx, aiCandidates, acMaxBeamSize);
-                if (use4Reranker)
-                     predictedAIACCandidates.put(pIdx, new Prediction4Reranker(pLabel, aiCandidates, acCandidates));
-                else
-                    highestScorePrediction = getHighestScorePredication(aiCandidates, acCandidates);
-            }else {
+                highestScorePrediction = getHighestScorePredication(aiCandidates, acCandidates, maps);
+            } else {
                 aiCandidatesGreedy = getBestAICandidatesGreedy(sentence, pIdx);
                 acCandidatesGreedy = getBestACCandidatesGreedy(sentence, pIdx, aiCandidatesGreedy);
-                if (use4Reranker)
-                    predictedAIACCandidates.put(pIdx, new Prediction4Reranker(pLabel, aiCandidates, acCandidates));
-                else {
-                    for (int idx = 0; idx < acCandidatesGreedy.size(); idx++) {
-                        int wordIdx = aiCandidatesGreedy.get(idx);
-                        int label = acCandidatesGreedy.get(idx);
-                        highestScorePrediction.put(wordIdx, label);
-                    }
+
+                for (int idx = 0; idx < acCandidatesGreedy.size(); idx++) {
+                    int wordIdx = aiCandidatesGreedy.get(idx);
+                    String label = maps.revLabel.get(acCandidatesGreedy.get(idx));
+                    highestScorePrediction.put(wordIdx, label);
                 }
             }
-            if (!use4Reranker)
-                predictedPAs.put(pIdx, new Prediction(pLabel, highestScorePrediction));
+            predictedPAs.put(pIdx, new Prediction(pLabel, highestScorePrediction));
         }
 
-        if (use4Reranker)
-            return predictedAIACCandidates;
-        else
-            return predictedPAs;
+        return predictedPAs;
     }
 
     ////////////////////////////////// GET BEST CANDIDATES ///////////////////////////////////////////////
@@ -298,9 +281,10 @@ public class Decoder {
         return acCandids;
     }
 
-    private HashMap<Integer, Integer> getHighestScorePredication
+    private HashMap<Integer, String> getHighestScorePredication
             (ArrayList<Pair<Double, ArrayList<Integer>>> aiCandidates,
-             ArrayList<ArrayList<Pair<Double, ArrayList<Integer>>>> acCandidates) {
+             ArrayList<ArrayList<Pair<Double, ArrayList<Integer>>>> acCandidates,
+             NNIndexMaps maps) {
 
         double highestScore = Double.NEGATIVE_INFINITY;
         ArrayList<Integer> highestScoreACSeq = new ArrayList<Integer>();
@@ -321,56 +305,33 @@ public class Decoder {
         }
 
         //after finding highest score sequence in the list of AC candidates
-        HashMap<Integer, Integer> wordIndexLabelMap = new HashMap<Integer, Integer>();
+        HashMap<Integer, String> wordIndexLabelMap = new HashMap<>();
 
         ArrayList<Integer> acResult = acCandidates.get(bestAIIndex).get(bestACIndex).second;
         ArrayList<Integer> aiResult = aiCandidates.get(bestAIIndex).second;
         assert acResult.size() == aiResult.size();
 
         for (int i = 0; i < acResult.size(); i++)
-            wordIndexLabelMap.put(aiResult.get(i), acResult.get(i));
+            wordIndexLabelMap.put(aiResult.get(i), maps.revLabel.get(acResult.get(i)));
         return wordIndexLabelMap;
     }
 
-    private HashMap<Integer, Integer> getHighestScorePredication
+    private HashMap<Integer, String> getHighestScorePredication
             (ArrayList<Pair<Double, ArrayList<Integer>>> aiCandidates) {
 
         TreeSet<Pair<Double, ArrayList<Integer>>> sortedCandidates = new TreeSet<Pair<Double, ArrayList<Integer>>>(aiCandidates);
         Pair<Double, ArrayList<Integer>> highestScorePair = sortedCandidates.pollLast();
 
         //after finding highest score sequence in the list of candidates
-        HashMap<Integer, Integer> wordIndexLabelMap = new HashMap<Integer, Integer>();
+        HashMap<Integer, String> wordIndexLabelMap = new HashMap<Integer, String>();
         ArrayList<Integer> highestScoreSeq = highestScorePair.second;
 
         for (int index : highestScoreSeq) {
-            wordIndexLabelMap.put(index, 1);
+            wordIndexLabelMap.put(index, "1");
         }
 
         return wordIndexLabelMap;
     }
-
-    //this function is used for joint ai-ac modules
-    private HashMap<Integer, Integer> getHighestScorePredicationJoint
-    (ArrayList<Pair<Double, ArrayList<Integer>>> candidates, int pIndex) {
-
-        TreeSet<Pair<Double, ArrayList<Integer>>> acCandidates4ThisSeq = new TreeSet<Pair<Double, ArrayList<Integer>>>(candidates);
-        Pair<Double, ArrayList<Integer>> highestScorePair = acCandidates4ThisSeq.pollLast();
-
-        //after finding highest score sequence in the list of candidates
-        HashMap<Integer, Integer> wordIndexLabelMap = new HashMap<Integer, Integer>();
-        ArrayList<Integer> highestScoreSeq = highestScorePair.second;
-
-        int realIndex = 1;
-        for (int k = 0; k < highestScoreSeq.size(); k++) {
-            if (realIndex == pIndex)
-                realIndex++;
-            wordIndexLabelMap.put(realIndex, highestScoreSeq.get(k));
-            realIndex++;
-        }
-
-        return wordIndexLabelMap;
-    }
-
 
     private int argmax(double[] scores) {
         int argmax = -1;
