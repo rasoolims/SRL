@@ -21,7 +21,7 @@ public class GeneralProperties implements Serializable {
     public boolean parseTaggedFile;
     public boolean parseConllFile;
     public boolean parsePartialConll;
-    public String modelFile;
+    public String modelDir;
     public int beamWidth;
     public boolean rootFirst;
     public boolean labeled;
@@ -41,7 +41,7 @@ public class GeneralProperties implements Serializable {
         parseTaggedFile = false;
         beamWidth = 8;
         rootFirst = false;
-        modelFile = "";
+        modelDir = "";
         outputFile = "";
         inputFile = "";
         labeled = true;
@@ -54,7 +54,7 @@ public class GeneralProperties implements Serializable {
     }
 
     private GeneralProperties(boolean showHelp, boolean evaluate, boolean train, boolean parseTaggedFile, boolean parseConllFile, boolean
-            parsePartialConll, boolean output, String modelFile, int beamWidth, boolean rootFirst, boolean labeled, boolean lowercase, String
+            parsePartialConll, boolean output, String modelDir, int beamWidth, boolean rootFirst, boolean labeled, boolean lowercase, String
                                       inputFile, String outputFile, int numOfThreads, HashSet<String> punctuations, boolean
             includePosAsUnknown) {
         this.showHelp = showHelp;
@@ -63,7 +63,7 @@ public class GeneralProperties implements Serializable {
         this.parseTaggedFile = parseTaggedFile;
         this.parseConllFile = parseConllFile;
         this.parsePartialConll = parsePartialConll;
-        this.modelFile = modelFile;
+        this.modelDir = modelDir;
         this.beamWidth = beamWidth;
         this.rootFirst = rootFirst;
         this.labeled = labeled;
@@ -124,13 +124,13 @@ public class GeneralProperties implements Serializable {
             builder.append("parse conll" + "\n");
             builder.append("input file: ").append(inputFile).append("\n");
             builder.append("output file: ").append(outputFile).append("\n");
-            builder.append("model file: ").append(modelFile).append("\n");
+            builder.append("model file: ").append(modelDir).append("\n");
             builder.append("number of threads: ").append(numOfThreads).append("\n");
         } else if (parseConllFile) {
             builder.append("parse partial conll" + "\n");
             builder.append("input file: ").append(inputFile).append("\n");
             builder.append("output file: ").append(outputFile).append("\n");
-            builder.append("model file: ").append(modelFile).append("\n");
+            builder.append("model file: ").append(modelDir).append("\n");
             builder.append("labeled: ").append(labeled).append("\n");
             builder.append("number of threads: ").append(numOfThreads).append("\n");
         } else if (evaluate || output) {
@@ -161,7 +161,7 @@ public class GeneralProperties implements Serializable {
      */
     @Override
     public GeneralProperties clone() {
-        return new GeneralProperties(showHelp, evaluate, train, parseTaggedFile, parseConllFile, parsePartialConll, output, modelFile, beamWidth,
+        return new GeneralProperties(showHelp, evaluate, train, parseTaggedFile, parseConllFile, parsePartialConll, output, modelDir, beamWidth,
                 rootFirst, labeled, lowercase, inputFile, outputFile, numOfThreads, punctuations, includePosAsUnknown);
     }
 }

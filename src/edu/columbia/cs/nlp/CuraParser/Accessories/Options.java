@@ -172,7 +172,7 @@ public class Options implements Serializable {
             else if (args[i].equals("-punc"))
                 options.changePunc(args[i + 1]);
             else if (args[i].equals("-model"))
-                options.generalProperties.modelFile = args[i + 1];
+                options.generalProperties.modelDir = args[i + 1];
             else if (args[i].equals("-dev"))
                 options.trainingOptions.devPath = args[i + 1];
             else if (args[i].equals("-e"))

@@ -6,10 +6,6 @@
 
 package SupervisedSRL;
 
-import SentenceStructures.Argument;
-import SentenceStructures.PA;
-import SentenceStructures.Sentence;
-import SupervisedSRL.Features.BaseFeatures;
 import SupervisedSRL.Strcutures.NNIndexMaps;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Options;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Utils;
@@ -39,7 +35,7 @@ public class GreedyTrainer {
     public static void trainWithNN(Options options, NNIndexMaps maps, int numOutputs,
                                    ArrayList<String> trainSentencesInCONLLFormat,
                                    ArrayList<String> devSentencesInCONLLFormat) throws Exception {
-        if (options.trainingOptions.trainFile.equals("") || options.generalProperties.modelFile.equals("")) {
+        if (options.trainingOptions.trainFile.equals("") || options.generalProperties.modelDir.equals("")) {
             Options.showHelp();
         } else {
             if (options.trainingOptions.pretrainLayers && options.networkProperties.hiddenLayer2Size != 0) {
@@ -56,7 +52,7 @@ public class GreedyTrainer {
         oneLayerOption.networkProperties.hiddenLayer2Size = 0;
         oneLayerOption.generalProperties.beamWidth = 1;
         oneLayerOption.trainingOptions.trainingIter = options.trainingOptions.preTrainingIter;
-        String modelFile = options.trainingOptions.preTrainedModelPath.equals("") ? options.generalProperties.modelFile : options.trainingOptions
+        String modelFile = options.trainingOptions.preTrainedModelPath.equals("") ? options.generalProperties.modelDir : options.trainingOptions
                 .preTrainedModelPath;
 
         if (options.trainingOptions.preTrainedModelPath.equals("")) {
