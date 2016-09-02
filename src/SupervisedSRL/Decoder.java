@@ -35,7 +35,7 @@ public class Decoder {
     }
 
     //stacked decoding
-    public static void decode(Decoder decoder, String devDataPath, ArrayList<String> labelMap,
+    public static void decode(Decoder decoder, String devDataPath,
                               int aiMaxBeamSize, int acMaxBeamSize,
                               int numOfPDFeatures, String modelDir, String outputFile, boolean greedy, NNIndexMaps maps) throws Exception {
 
@@ -226,7 +226,7 @@ public class Decoder {
                 // retrieve candidates for the current word
                 double[] featVector = acClassifier.maps.features(new BaseFeatures(pIdx, wordIdx, sentence), 0);
                 double[] labelScores = new double[numOfLabels];
-                labelScores = acClassifier.output(featVector, labelScores);
+                labelScores = acClassifier.output(featVector, labelScores, true);
 
                 // build an intermediate beam
                 TreeSet<BeamElement> newBeamHeap = new TreeSet<BeamElement>();
@@ -273,7 +273,7 @@ public class Decoder {
             int wordIdx = aiCandidates.get(aiCandidIdx);
             double[] featVector = acClassifier.maps.features(new BaseFeatures(pIdx, wordIdx, sentence), 0);
             double[] labelScores = new double[numOfLabels];
-            labelScores = acClassifier.output(featVector, labelScores);
+            labelScores = acClassifier.output(featVector, labelScores, true);
             int predictedLabel = argmax(labelScores);
             acCandids.add(predictedLabel);
         }

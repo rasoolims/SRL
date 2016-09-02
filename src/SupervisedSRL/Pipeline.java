@@ -35,15 +35,14 @@ public class Pipeline {
             ObjectInput reader2 = new ObjectInputStream(gz2);
             MLPNetwork acClassifier = (MLPNetwork) reader2.readObject();
 
-            // todo sure not working
             Decoder.decode(new Decoder(aiClassifier, acClassifier),
-                    options.generalProperties.inputFile, acClassifier.maps.revLabel,
+                    options.generalProperties.inputFile,
                     options.generalProperties.beamWidth, options.generalProperties.beamWidth, numOfPDFeatures,
                     options.generalProperties.modelDir, options.generalProperties.outputFile,
                     options.generalProperties.beamWidth == 1 ? true : false, acClassifier.maps);
 
-            // todo sure not working
-            Evaluation.evaluate(options.generalProperties.outputFile, options.generalProperties.inputFile, acClassifier.maps.labelMap);
+            // no need to evaluate!
+            //todo Evaluation.evaluate(options.generalProperties.outputFile, options.generalProperties.inputFile, acClassifier.maps.labelMap);
         } else{
             Options.showHelp();
         }
