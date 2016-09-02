@@ -71,40 +71,6 @@ public class Decoder {
         System.out.println("Total time for decoding: " + format.format(((endTime - startTime) / 1000.0) / 60.0));
     }
 
-    //joint decoding
-    public static void decode(Decoder decoder, IndexMap indexMap, String devData,
-                              String[] labelMap,
-                              int maxBeamSize, int numOfFeatures, int numOfPDFeatures,
-                              String modelDir,
-                              String outputFile,
-                              HashMap<Object, Integer>[] featDict,
-                              ClassifierType classifierType, boolean greedy) throws Exception {
-
-        DecimalFormat format = new DecimalFormat("##.00");
-
-        System.out.println("Decoding started (on dev data)...");
-        long startTime = System.currentTimeMillis();
-        boolean decode = true;
-        List<String> devSentencesInCONLLFormat = IO.readCoNLLFile(devData);
-        TreeMap<Integer, Prediction>[] predictions = new TreeMap[devSentencesInCONLLFormat.size()];
-        ArrayList<ArrayList<String>> sentencesToWriteOutputFile = new ArrayList<ArrayList<String>>();
-
-        for (int d = 0; d < devSentencesInCONLLFormat.size(); d++) {
-            if (d % 1000 == 0)
-                System.out.println(d + "/" + devSentencesInCONLLFormat.size());
-            String devSentence = devSentencesInCONLLFormat.get(d);
-            Sentence sentence = new Sentence(devSentence, indexMap);
-            sentencesToWriteOutputFile.add(IO.getSentenceForOutput(devSentence));
-
-            predictions[d] = decoder.predictJoint(sentence, indexMap, maxBeamSize, numOfFeatures, numOfPDFeatures, modelDir,featDict, classifierType, greedy);
-        }
-
-        IO.writePredictionsInCoNLLFormat(sentencesToWriteOutputFile, predictions, labelMap, outputFile);
-        long endTime = System.currentTimeMillis();
-        System.out.println("Total time for decoding: " + format.format(((endTime - startTime) / 1000.0) / 60.0));
-    }
-
-
     ////////////////////////////////// PREDICT ////////////////////////////////////////////////////////
 
     public HashMap<Integer, Prediction> predictAI(Sentence sentence, IndexMap indexMap, int aiMaxBeamSize,

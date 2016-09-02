@@ -23,12 +23,11 @@ public class Pipeline {
     //predicate cluster features 3
     //argument cluster features 5
 
-    public static int numOfAIFeatures = 25 + 3+ 5+ 154 +91 + 6;
-    public static int numOfACFeatures = 25 + 3+ 5+ 154 + 91 + 6;
+    public static int numOfAIFeatures = 25 + 3 + 5 + 154 + 91 + 6;
+    public static int numOfACFeatures = 25 + 3 + 5 + 154 + 91 + 6;
     public static int numOfPDFeatures = 9;
     public static int numOfPDTrainingIterations = 10;
     public static String unseenSymbol = ";;?;;";
-
 
 
     public static void main(String[] args) throws Exception {
@@ -44,94 +43,63 @@ public class Pipeline {
         int adamBatchSize = Integer.parseInt(args[8]);
         int learnerType = Integer.parseInt(args[9]); //1: ap 2: ll 3:adam
         double adamLearningRate = Double.parseDouble(args[10]);
-        boolean decodeJoint = Boolean.parseBoolean(args[11]);
         boolean decodeOnly = Boolean.parseBoolean(args[12]);
         boolean greedy = Boolean.parseBoolean(args[13]);
         int numOfThreads = Integer.parseInt(args[14]);
         ClassifierType classifierType = ClassifierType.AveragedPerceptron;
-        switch (learnerType)
-        {
-            case(0):
-                classifierType= ClassifierType.NN;
+        switch (learnerType) {
+            case (0):
+                classifierType = ClassifierType.NN;
                 break;
-            case(1):
-                classifierType= ClassifierType.AveragedPerceptron;
+            case (1):
+                classifierType = ClassifierType.AveragedPerceptron;
                 break;
         }
 
         if (!decodeOnly) {
             String[] modelPaths = new String[4];
-            if (decodeJoint) {
-                //joint decoding
-                if (classifierType == ClassifierType.AveragedPerceptron) {
-                    modelPaths[0] = Train.trainJoint(trainData, devData, clusterFile, numOfTrainingIterations, modelDir, outputFile, numOfACFeatures, numOfPDFeatures, acMaxBeamSize, greedy);
-                    ModelInfo modelInfo = new ModelInfo(modelPaths[0]);
-                    IndexMap indexMap = modelInfo.getIndexMap();
-                    AveragedPerceptron classifier = modelInfo.getClassifier();
-                    Decoder.decode(new Decoder(classifier, "joint"),
-                            indexMap, devData, classifier.getLabelMap(),
-                            acMaxBeamSize, numOfACFeatures, numOfPDFeatures, modelDir, outputFile, null, ClassifierType.AveragedPerceptron, greedy);
 
-                    Evaluation.evaluate(outputFile, devData, indexMap, modelInfo.getClassifier().getReverseLabelMap());
-                }
-            } else {
-                //stacked decoding
-                if (classifierType == ClassifierType.NN) {
-                    modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
-                            numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
-                            ClassifierType.NN, greedy, numOfThreads);
+            //stacked decoding
+            if (classifierType == ClassifierType.NN) {
+                modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
+                        numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
+                        ClassifierType.NN, greedy, numOfThreads);
 
-                } else if (classifierType == ClassifierType.AveragedPerceptron) {
-                    modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
-                            numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
-                            ClassifierType.AveragedPerceptron, greedy, numOfThreads);
+            } else if (classifierType == ClassifierType.AveragedPerceptron) {
+                modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
+                        numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
+                        ClassifierType.AveragedPerceptron, greedy, numOfThreads);
 
-                    ModelInfo aiModelInfo = new ModelInfo(modelPaths[0]);
-                    IndexMap indexMap = aiModelInfo.getIndexMap();
-                    AveragedPerceptron aiClassifier = aiModelInfo.getClassifier();
-                    AveragedPerceptron acClassifier = AveragedPerceptron.loadModel(modelPaths[2]);
-                    Decoder.decode(new Decoder(aiClassifier, acClassifier),
-                            aiModelInfo.getIndexMap(),
-                            devData, acClassifier.getLabelMap(),
-                            aiMaxBeamSize, acMaxBeamSize, numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
-                            modelDir, outputFile, null, null, ClassifierType.AveragedPerceptron, greedy);
+                ModelInfo aiModelInfo = new ModelInfo(modelPaths[0]);
+                IndexMap indexMap = aiModelInfo.getIndexMap();
+                AveragedPerceptron aiClassifier = aiModelInfo.getClassifier();
+                AveragedPerceptron acClassifier = AveragedPerceptron.loadModel(modelPaths[2]);
+                Decoder.decode(new Decoder(aiClassifier, acClassifier),
+                        aiModelInfo.getIndexMap(),
+                        devData, acClassifier.getLabelMap(),
+                        aiMaxBeamSize, acMaxBeamSize, numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
+                        modelDir, outputFile, null, null, ClassifierType.AveragedPerceptron, greedy);
 
-                    HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acClassifier.getReverseLabelMap());
-                    reverseLabelMap.put("0", reverseLabelMap.size());
-                    Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-
-                }
+                HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acClassifier.getReverseLabelMap());
+                reverseLabelMap.put("0", reverseLabelMap.size());
+                Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
             }
         } else {
-            if (decodeJoint) {
-                //joint decoding
-                if (classifierType == ClassifierType.AveragedPerceptron) {
-                    ModelInfo modelInfo = new ModelInfo(modelDir + "/joint.model");
-                    IndexMap indexMap = modelInfo.getIndexMap();
-                    AveragedPerceptron classifier = modelInfo.getClassifier();
-                    Decoder.decode(new Decoder(classifier, "joint"),
-                            indexMap, devData, classifier.getLabelMap(),
-                            acMaxBeamSize, numOfACFeatures, numOfPDFeatures, modelDir, outputFile, null, ClassifierType.AveragedPerceptron, greedy);
+            //stacked decoding
+            if (classifierType == ClassifierType.AveragedPerceptron) {
+                ModelInfo aiModelInfo = new ModelInfo(modelDir + "/AI.model");
+                IndexMap indexMap = aiModelInfo.getIndexMap();
+                AveragedPerceptron aiClassifier = aiModelInfo.getClassifier();
+                AveragedPerceptron acClassifier = AveragedPerceptron.loadModel(modelDir + "/AC.model");
+                Decoder.decode(new Decoder(aiClassifier, acClassifier),
+                        aiModelInfo.getIndexMap(),
+                        devData, acClassifier.getLabelMap(),
+                        aiMaxBeamSize, acMaxBeamSize, numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
+                        modelDir, outputFile, null, null, ClassifierType.AveragedPerceptron, greedy);
 
-                    Evaluation.evaluate(outputFile, devData, indexMap, classifier.getReverseLabelMap());
-                }
-            } else {
-                //stacked decoding
-                if (classifierType == ClassifierType.AveragedPerceptron) {
-                    ModelInfo aiModelInfo = new ModelInfo(modelDir + "/AI.model");
-                    IndexMap indexMap = aiModelInfo.getIndexMap();
-                    AveragedPerceptron aiClassifier = aiModelInfo.getClassifier();
-                    AveragedPerceptron acClassifier = AveragedPerceptron.loadModel(modelDir + "/AC.model");
-                    Decoder.decode(new Decoder(aiClassifier, acClassifier),
-                            aiModelInfo.getIndexMap(),
-                            devData, acClassifier.getLabelMap(),
-                            aiMaxBeamSize, acMaxBeamSize, numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
-                            modelDir, outputFile, null, null, ClassifierType.AveragedPerceptron, greedy);
-
-                    HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acClassifier.getReverseLabelMap());
-                    reverseLabelMap.put("0", reverseLabelMap.size());
-                    Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-                }
+                HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acClassifier.getReverseLabelMap());
+                reverseLabelMap.put("0", reverseLabelMap.size());
+                Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
             }
         }
     }
