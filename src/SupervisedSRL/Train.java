@@ -106,19 +106,18 @@ public class Train {
                                  ArrayList<String> devSentencesInCONLLFormat,
                                  NNIndexMaps maps, String modelDir)
             throws Exception {
-        GreedyTrainer.trainWithNN(options, maps, 2, trainSentencesInCONLLFormat, devSentencesInCONLLFormat);
         String modelPath = modelDir + "/AI.model";
+        GreedyTrainer.trainWithNN(options, maps, 2, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, modelPath);
         return modelPath;
     }
-
 
     public static String trainAC(Options options, ArrayList<String> trainSentencesInCONLLFormat,
                                  ArrayList<String> devSentencesInCONLLFormat,
                                  NNIndexMaps maps, String modelDir)
             throws Exception {
 
-        GreedyTrainer.trainWithNN(options, maps, maps.labelMap.size(), trainSentencesInCONLLFormat, devSentencesInCONLLFormat);
         String modelPath = modelDir + "/AC.model";
+        GreedyTrainer.trainWithNN(options, maps, maps.labelMap.size(), trainSentencesInCONLLFormat, devSentencesInCONLLFormat, modelPath);
         return modelPath;
     }
 
@@ -128,5 +127,4 @@ public class Train {
                 return arg.getType();
         return "";
     }
-
 }

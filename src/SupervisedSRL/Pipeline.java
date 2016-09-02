@@ -31,7 +31,7 @@ public class Pipeline {
             MLPNetwork aiClassifier = (MLPNetwork) reader1.readObject();
             Options infoptions1 = (Options) reader1.readObject();
 
-            FileInputStream fos2 = new FileInputStream(options.generalProperties.modelDir + "/AI.model");
+            FileInputStream fos2 = new FileInputStream(options.generalProperties.modelDir + "/AC.model");
             GZIPInputStream gz2 = new GZIPInputStream(fos2);
             ObjectInput reader2 = new ObjectInputStream(gz2);
             MLPNetwork acClassifier = (MLPNetwork) reader2.readObject();

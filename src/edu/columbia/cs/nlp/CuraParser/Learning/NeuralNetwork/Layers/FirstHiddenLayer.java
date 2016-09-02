@@ -100,6 +100,10 @@ public class FirstHiddenLayer extends Layer {
         this.numPosPathLayers=numPosPathLayers;
         this.numPositionLayers=numPositionLayers;
 
+        this.wordEmbeddings.addPretrainedVectors(embeddingsDictionary);
+        if (getPrecomputationMap() != null) {
+            preCompute();
+        }
     }
 
     public void preCompute() {

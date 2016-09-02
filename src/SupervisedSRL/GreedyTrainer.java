@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 public class GreedyTrainer {
     Options options;
@@ -34,34 +35,33 @@ public class GreedyTrainer {
 
     public static void trainWithNN(Options options, NNIndexMaps maps, int numOutputs,
                                    ArrayList<String> trainSentencesInCONLLFormat,
-                                   ArrayList<String> devSentencesInCONLLFormat) throws Exception {
+                                   ArrayList<String> devSentencesInCONLLFormat, String modelPath) throws Exception {
         if (options.trainingOptions.trainFile.equals("") || options.generalProperties.modelDir.equals("")) {
             Options.showHelp();
         } else {
             if (options.trainingOptions.pretrainLayers && options.networkProperties.hiddenLayer2Size != 0) {
-                trainMultiLayerNetwork(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat,maps, numOutputs);
+                trainMultiLayerNetwork(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat,maps, numOutputs, modelPath);
             } else {
-                train(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat,maps, numOutputs);
+                train(options, trainSentencesInCONLLFormat, devSentencesInCONLLFormat,maps, numOutputs,modelPath);
             }
         }
     }
 
     private static void trainMultiLayerNetwork(Options options,ArrayList<String> trainSentencesInCONLLFormat,
-                                               ArrayList<String> devSentencesInCONLLFormat, NNIndexMaps maps, int numOutputs) throws Exception {
+                                               ArrayList<String> devSentencesInCONLLFormat, NNIndexMaps maps, int numOutputs,
+                                               String modelPath) throws Exception {
         Options oneLayerOption = options.clone();
         oneLayerOption.networkProperties.hiddenLayer2Size = 0;
         oneLayerOption.generalProperties.beamWidth = 1;
-        oneLayerOption.trainingOptions.trainingIter = options.trainingOptions.preTrainingIter;
-        String modelFile = options.trainingOptions.preTrainedModelPath.equals("") ? options.generalProperties.modelDir : options.trainingOptions
-                .preTrainedModelPath;
 
+        oneLayerOption.trainingOptions.trainingIter = options.trainingOptions.preTrainingIter;
         if (options.trainingOptions.preTrainedModelPath.equals("")) {
             System.out.println("First training with one hidden layer!");
-            train(oneLayerOption,trainSentencesInCONLLFormat, devSentencesInCONLLFormat, maps, numOutputs);
+            train(oneLayerOption,trainSentencesInCONLLFormat, devSentencesInCONLLFormat, maps, numOutputs, modelPath);
         }
 
         System.out.println("Loading model with one hidden layer!");
-        FileInputStream fos = new FileInputStream(modelFile);
+        FileInputStream fos = new FileInputStream(modelPath);
         GZIPInputStream gz = new GZIPInputStream(fos);
         ObjectInput reader = new ObjectInputStream(gz);
         MLPNetwork mlpNetwork = (MLPNetwork) reader.readObject();
@@ -73,20 +73,21 @@ public class GreedyTrainer {
         MLPNetwork net = constructMlpNetwork(twoLayerOptions, maps, numOutputs);
         // Putting the first layer into it!
         net.layer(0).setLayer(mlpNetwork.layer(0));
-        trainNetwork(twoLayerOptions, maps, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, net);
+        trainNetwork(twoLayerOptions, maps, trainSentencesInCONLLFormat, devSentencesInCONLLFormat, net,modelPath);
     }
 
     private static void train(Options options,ArrayList<String> trainSentencesInCONLLFormat,
                               ArrayList<String> devSentencesInCONLLFormat,
-                              NNIndexMaps maps, int numOutputs) throws Exception {
+                              NNIndexMaps maps, int numOutputs, String modelPath) throws Exception {
         Options greedyOptions = options.clone();
         greedyOptions.generalProperties.beamWidth = 1;
         MLPNetwork mlpNetwork = constructMlpNetwork(greedyOptions, maps, numOutputs);
-        trainNetwork(greedyOptions, maps, trainSentencesInCONLLFormat, devSentencesInCONLLFormat,mlpNetwork);
+        trainNetwork(greedyOptions, maps, trainSentencesInCONLLFormat, devSentencesInCONLLFormat,mlpNetwork, modelPath);
     }
 
     private static void trainNetwork(Options options, NNIndexMaps maps, ArrayList<String> trainSentencesInCONLLFormat,
-                                     ArrayList<String> devSentencesInCONLLFormat, MLPNetwork mlpNetwork) throws Exception {
+                                     ArrayList<String> devSentencesInCONLLFormat, MLPNetwork mlpNetwork,
+                                     String modelPath) throws Exception {
         MLPNetwork avgMlpNetwork = mlpNetwork.clone(true, true);
         avgMlpNetwork.maps = maps;
         ArrayList<String> dataSet =trainSentencesInCONLLFormat;
@@ -99,7 +100,7 @@ public class GreedyTrainer {
 
         MLPTrainer neuralTrainer = new MLPTrainer(mlpNetwork, options);
 
-        double bestModelUAS = 0;
+        double acc = Double.NEGATIVE_INFINITY;
         Random random = new Random();
         System.out.println("Data has " + allInstances.size() + " instances");
         System.out.println("Decay after every " + options.trainingOptions.decayStep + " batches");
@@ -143,6 +144,15 @@ public class GreedyTrainer {
         if (options.trainingOptions.averagingOption != AveragingOption.NO) {
             avgMlpNetwork.preCompute();
             // todo evaluate and save if needed
+        }
+
+        // if no eval, save the last
+        if(acc == Double.NEGATIVE_INFINITY) {
+            FileOutputStream fos = new FileOutputStream(modelPath);
+            GZIPOutputStream gz = new GZIPOutputStream(fos);
+            ObjectOutput writer = new ObjectOutputStream(gz);
+            writer.writeObject(avgMlpNetwork);
+            writer.close();
         }
         neuralTrainer.shutDownLiveThreads();
     }
