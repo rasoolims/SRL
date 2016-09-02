@@ -42,7 +42,12 @@ public class Train {
                         instances.add(instance);
                     } else if (isArg == 1) {
                         double[] label = new double[maps.labelMap.size()];
-                        label[maps.labelMap.get(arg)] = 1;
+                        if(maps.labelMap.containsKey(arg)) {
+                            label[maps.labelMap.get(arg)] = 1;
+                        } else{
+                            // For cases where the testing data contains out of vocabulary argument types.
+                            label[0] = 1;
+                        }
                         BaseFeatures baseFeatures = new BaseFeatures(pIdx, wordIdx, sentence);
                         NeuralTrainingInstance instance = new NeuralTrainingInstance(maps.features(baseFeatures), label);
                         instances.add(instance);
