@@ -1,8 +1,8 @@
 package SupervisedSRL;
 
+import SupervisedSRL.Reranker.Decoder;
 import SupervisedSRL.Reranker.RerankerInstanceGenerator;
 import SupervisedSRL.Reranker.Train;
-import SupervisedSRL.Reranker.Decoder;
 import SupervisedSRL.Strcutures.ClassifierType;
 import SupervisedSRL.Strcutures.IndexMap;
 import SupervisedSRL.Strcutures.ModelInfo;
@@ -50,14 +50,12 @@ public class PipeLineWithReranker {
         int numOfThreads = Integer.parseInt(args[14]);
         ClassifierType classifierType = ClassifierType.AveragedPerceptron;
         switch (learnerType) {
+            case (0):
+                classifierType = ClassifierType.NN;
+                break;
             case (1):
                 classifierType = ClassifierType.AveragedPerceptron;
                 break;
-            case (2):
-                classifierType = ClassifierType.Liblinear;
-                break;
-            case (3):
-                classifierType = ClassifierType.Adam;
         }
         String[] modelPaths= new String[4];
         if (classifierType == ClassifierType.AveragedPerceptron) {

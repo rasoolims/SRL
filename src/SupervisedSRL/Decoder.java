@@ -4,9 +4,8 @@ import Sentence.Sentence;
 import SupervisedSRL.Features.FeatureExtractor;
 import SupervisedSRL.PD.PD;
 import SupervisedSRL.Strcutures.*;
-import de.bwaldvogel.liblinear.*;
-import ml.AveragedPerceptron;
 import ml.Adam;
+import ml.AveragedPerceptron;
 import util.IO;
 
 import java.text.DecimalFormat;
@@ -19,8 +18,6 @@ public class Decoder {
 
     AveragedPerceptron aiClassifier; //argument identification (binary classifier)
     AveragedPerceptron acClassifier; //argument classification (multi-class classifier)
-    Model aiClassifier_ll;
-    Model acClassifier_ll;
     Adam aiClassifier_adam;
     Adam acClassifier_adam;
 
@@ -40,28 +37,10 @@ public class Decoder {
         this.acClassifier = acClassifier;
     }
 
-
-    public Decoder(Model aiClassifier, Model acClassifier) {
-        this.aiClassifier_ll = aiClassifier;
-        this.acClassifier_ll = acClassifier;
-    }
-
-
     public Decoder(Adam aiClassifier, Adam acClassifier) {
         this.aiClassifier_adam = aiClassifier;
         this.acClassifier_adam = acClassifier;
     }
-
-
-    public Decoder(Model classifier, String state) {
-
-        if (state.equals("AI")) {
-            this.aiClassifier_ll = classifier;
-        } else if (state.equals("AC") || state.equalsIgnoreCase("joint")) {
-            this.acClassifier_ll = classifier;
-        }
-    }
-
 
     public Decoder(Adam classifier, String state) {
 
@@ -286,22 +265,6 @@ public class Decoder {
                 double[] scores = aiClassifier.score(featVector);
                 score0 = scores[0];
                 score1 = scores[1];
-            }else if (classifierType == ClassifierType.Liblinear) {
-                ArrayList<FeatureNode> feats = new ArrayList<FeatureNode>();
-                for (int d = 0; d < featVector.length; d++)
-                    if (featDict[d].containsKey(featVector[d]))
-                        //seen feature value
-                        feats.add(new FeatureNode(featDict[d].get(featVector[d]), 1));
-                    else
-                        //unseen feature value
-                        feats.add(new FeatureNode(featDict[d].get(Pipeline.unseenSymbol), 1));
-                FeatureNode[] featureNodes = feats.toArray(new FeatureNode[0]);
-
-                double[] probEstimates = new double[2];
-                int prediction = (int) Linear.predictProbability(aiClassifier_ll, featureNodes, probEstimates);
-                score0 = Math.log(probEstimates[0]);
-                score1 = Math.log(probEstimates[1]);
-
             }else if (classifierType == ClassifierType.Adam){
                 ArrayList<Integer> feats = new ArrayList<Integer>();
                 for (int d = 0; d < featVector.length; d++)
@@ -364,21 +327,6 @@ public class Decoder {
                 double score1 = aiClassifier.score(featVector)[1];
                 if (score1 >= 0)
                     aiCandids.add(wordIdx);
-            } else if (classifierType == ClassifierType.Liblinear) {
-                Object[] featVector = FeatureExtractor.extractAIFeatures(pIdx, wordIdx, sentence, numOfFeatures, indexMap, false, 0);
-                ArrayList<FeatureNode> feats = new ArrayList<FeatureNode>();
-                for (int d = 0; d < featVector.length; d++)
-                    if (featDict[d].containsKey(featVector[d]))
-                        //seen feature value
-                        feats.add(new FeatureNode(featDict[d].get(featVector[d]), 1));
-                    else
-                        //unseen feature value
-                        feats.add(new FeatureNode(featDict[d].get(Pipeline.unseenSymbol), 1));
-                FeatureNode[] featureNodes = feats.toArray(new FeatureNode[0]);
-                double[] probEstimates = new double[2];
-                int prediction = (int) Linear.predictProbability(aiClassifier_ll, featureNodes, probEstimates);
-                if (probEstimates[1] > probEstimates[0])
-                    aiCandids.add(wordIdx);
             } else if (classifierType == ClassifierType.Adam) {
 
                 Object[] featVector = FeatureExtractor.extractAIFeatures(pIdx, wordIdx, sentence, numOfFeatures, indexMap, false, 0);
@@ -406,8 +354,6 @@ public class Decoder {
         int numOfLabels = 0;
         if (classifierType== ClassifierType.AveragedPerceptron)
             numOfLabels = acClassifier.getLabelMap().length;
-        else if (classifierType == ClassifierType.Liblinear)
-            numOfLabels = acClassifier_ll.getLabels().length;
         else if (classifierType == ClassifierType.Adam)
             numOfLabels = acClassifier_adam.getLabelMap().length;
 
@@ -427,24 +373,7 @@ public class Decoder {
 
                 if (classifierType== ClassifierType.AveragedPerceptron) {
                     labelScores = acClassifier.score(featVector);
-                }
-                else if (classifierType == ClassifierType.Liblinear){
-                    ArrayList<FeatureNode> feats = new ArrayList<FeatureNode>();
-                    for (int d = 0; d < featVector.length; d++)
-                        if (featDict[d].containsKey(featVector[d]))
-                            //seen feature value
-                            feats.add(new FeatureNode(featDict[d].get(featVector[d]), 1));
-                        else
-                            //unseen feature value
-                            feats.add(new FeatureNode(featDict[d].get(Pipeline.unseenSymbol), 1));
-                    FeatureNode[] featureNodes = feats.toArray(new FeatureNode[0]);
-
-                    double[] probEstimates = new double[numOfLabels];
-                    int prediction = (int) Linear.predictProbability(acClassifier_ll, featureNodes, probEstimates);
-                    for (int labelIdx=0; labelIdx< numOfLabels; labelIdx++)
-                        labelScores[labelIdx] = Math.log(probEstimates[labelIdx]);
-
-                }else if (classifierType == ClassifierType.Adam){
+                } else if (classifierType == ClassifierType.Adam) {
                     ArrayList<Integer> feats = new ArrayList<Integer>();
                     for (int d = 0; d < featVector.length; d++)
                         if (featDict[d].containsKey(featVector[d]))
@@ -505,25 +434,7 @@ public class Decoder {
                 double[] labelScores = acClassifier.score(featVector);
                 int predictedLabel = argmax(labelScores);
                 acCandids.add(predictedLabel);
-            }else if (classifierType == ClassifierType.Liblinear)
-            {
-                // retrieve candidates for the current word
-                int[] labels = acClassifier_ll.getLabels();
-                Object[] featVector = FeatureExtractor.extractACFeatures(pIdx, wordIdx, sentence, numOfFeatures, indexMap, false, 0);
-                ArrayList<FeatureNode> feats = new ArrayList<FeatureNode>();
-                for (int d = 0; d < featVector.length; d++)
-                    if (featDict[d].containsKey(featVector[d]))
-                        //seen feature value
-                        feats.add(new FeatureNode(featDict[d].get(featVector[d]), 1));
-                    else
-                        //unseen feature value
-                        feats.add(new FeatureNode(featDict[d].get(Pipeline.unseenSymbol), 1));
-                FeatureNode[] featureNodes = feats.toArray(new FeatureNode[0]);
-
-                double[] probEstimates = new double[labels.length];
-                int prediction = (int) Linear.predictProbability(acClassifier_ll, featureNodes, probEstimates);
-                acCandids.add(prediction);
-            }else if (classifierType == ClassifierType.Adam) {
+            } else if (classifierType == ClassifierType.Adam) {
                 String[] labelMap = acClassifier_adam.getLabelMap();
                 // retrieve candidates for the current word
                 Object[] featVector = FeatureExtractor.extractACFeatures(pIdx, wordIdx, sentence, numOfFeatures, indexMap, false, 0);
@@ -551,8 +462,6 @@ public class Decoder {
         int numOfLabels = 0;
         if (classifierType == ClassifierType.AveragedPerceptron)
             numOfLabels = acClassifier.getLabelMap().length;
-        else if (classifierType == ClassifierType.Liblinear)
-            numOfLabels = acClassifier_ll.getLabels().length;
         else if (classifierType == ClassifierType.Adam)
             numOfLabels = acClassifier_adam.getLabelMap().length;
 
@@ -568,24 +477,7 @@ public class Decoder {
 
             if (classifierType == ClassifierType.AveragedPerceptron)
                 labelScores = acClassifier.score(featVector);
-
-            else if (classifierType == ClassifierType.Liblinear){
-                ArrayList<FeatureNode> feats = new ArrayList<FeatureNode>();
-                for (int d = 0; d < featVector.length; d++)
-                    if (featDict[d].containsKey(featVector[d]))
-                        //seen feature value
-                        feats.add(new FeatureNode(featDict[d].get(featVector[d]), 1));
-                    else
-                        //unseen feature value
-                        feats.add(new FeatureNode(featDict[d].get(Pipeline.unseenSymbol), 1));
-                FeatureNode[] featureNodes = feats.toArray(new FeatureNode[0]);
-
-                double[] probEstimates = new double[numOfLabels];
-                int prediction = (int) Linear.predictProbability(acClassifier_ll, featureNodes, probEstimates);
-                for (int labelIdx=0; labelIdx< numOfLabels; labelIdx++)
-                    labelScores[labelIdx] = Math.log(probEstimates[labelIdx]);
-
-            }else if (classifierType == ClassifierType.Adam){
+            else if (classifierType == ClassifierType.Adam) {
                 ArrayList<Integer> feats = new ArrayList<Integer>();
                 for (int d = 0; d < featVector.length; d++)
                     if (featDict[d].containsKey(featVector[d]))
@@ -636,8 +528,6 @@ public class Decoder {
 
         if (classifierType == ClassifierType.AveragedPerceptron)
             numOfLabels = acClassifier.getLabelMap().length;
-        else if (classifierType == ClassifierType.Liblinear)
-            numOfLabels = acClassifier_ll.getLabels().length;
         else if (classifierType == ClassifierType.Adam)
             numOfLabels = acClassifier_adam.getLabelMap().length;
 
@@ -648,24 +538,7 @@ public class Decoder {
 
             if (classifierType == ClassifierType.AveragedPerceptron)
                 labelScores = acClassifier.score(featVector);
-
-            else if (classifierType == ClassifierType.Liblinear) {
-                ArrayList<FeatureNode> feats = new ArrayList<FeatureNode>();
-                for (int d = 0; d < featVector.length; d++)
-                    if (featDict[d].containsKey(featVector[d]))
-                        //seen feature value
-                        feats.add(new FeatureNode(featDict[d].get(featVector[d]), 1));
-                    else
-                        //unseen feature value
-                        feats.add(new FeatureNode(featDict[d].get(Pipeline.unseenSymbol), 1));
-                FeatureNode[] featureNodes = feats.toArray(new FeatureNode[0]);
-
-                double[] probEstimates = new double[numOfLabels];
-                int prediction = (int) Linear.predictProbability(acClassifier_ll, featureNodes, probEstimates);
-                for (int labelIdx = 0; labelIdx < numOfLabels; labelIdx++)
-                    labelScores[labelIdx] = Math.log(probEstimates[labelIdx]);
-
-            } else if (classifierType == ClassifierType.Adam) {
+            else if (classifierType == ClassifierType.Adam) {
                 ArrayList<Integer> feats = new ArrayList<Integer>();
                 for (int d = 0; d < featVector.length; d++)
                     if (featDict[d].containsKey(featVector[d]))

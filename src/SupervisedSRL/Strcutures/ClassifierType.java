@@ -6,6 +6,5 @@ package SupervisedSRL.Strcutures;
 public enum ClassifierType {
     NN,
     AveragedPerceptron,
-    Liblinear,
     Adam
 }

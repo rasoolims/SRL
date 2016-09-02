@@ -1,5 +1,6 @@
 package SupervisedSRL.Strcutures;
 
+import ml.Adam;
 import ml.AveragedPerceptron;
 
 import java.io.*;
@@ -7,8 +8,6 @@ import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import de.bwaldvogel.liblinear.*;
-import ml.Adam;
 
 /**
  * Created by Maryam Aminian on 6/22/16.
@@ -16,7 +15,6 @@ import ml.Adam;
 public class ModelInfo implements Serializable {
 
     AveragedPerceptron classifier;
-    Model classifierLiblinear;
     Adam classifierAdam;
     HashMap<Object, Integer>[] featDict;
     HashMap<String, Integer> labelDict;
@@ -70,10 +68,7 @@ public class ModelInfo implements Serializable {
 
     public ModelInfo(String modelPath, String mappingDictsPath, ClassifierType classifierType) throws Exception {
 
-        if (classifierType == ClassifierType.Liblinear)
-            this.classifierLiblinear = Linear.loadModel(new File(modelPath));
-        else if (classifierType == ClassifierType.Adam)
-            this.classifierAdam = Adam.loadModel(modelPath);
+        this.classifierAdam = Adam.loadModel(modelPath);
 
         FileInputStream fis = new FileInputStream(mappingDictsPath);
         GZIPInputStream gz = new GZIPInputStream(fis);
@@ -92,7 +87,6 @@ public class ModelInfo implements Serializable {
 
 
     public static void saveModel(AveragedPerceptron classifier, IndexMap indexMap, String filePath) throws Exception {
-
         DecimalFormat format = new DecimalFormat("##.00");
         HashMap<Object, CompactArray>[] weights = classifier.getWeights();
         HashMap<Object, CompactArray>[] avgWeights = classifier.getAvgWeights();
@@ -148,20 +142,6 @@ public class ModelInfo implements Serializable {
         writer.close();
     }
 
-
-    public static void saveModel(Model classifier, IndexMap indexMap, HashMap<Object, Integer>[] featDict,
-                                 HashMap<String, Integer> labelDict, String modelPath, String mappingDictsPath) throws Exception {
-
-        classifier.save(new File(modelPath));
-        //save featDic
-        FileOutputStream fos = new FileOutputStream(mappingDictsPath);
-        GZIPOutputStream gz = new GZIPOutputStream(fos);
-        ObjectOutput writer = new ObjectOutputStream(gz);
-        writer.writeObject(featDict);
-        writer.writeObject(indexMap);
-        writer.writeObject(labelDict);
-        writer.close();
-    }
 
     public static void saveModel(Adam classifier, IndexMap indexMap, HashMap<Object, Integer>[] featDict,
                                  HashMap<String, Integer> labelDict, String modelPath, String mappingDictsPath) throws Exception {
@@ -238,8 +218,6 @@ public class ModelInfo implements Serializable {
     public IndexMap getIndexMap() {
         return indexMap;
     }
-
-    public Model getClassifierLiblinear() {return classifierLiblinear;}
 
     public HashMap<Object, Integer>[] getFeatDict() {return featDict;}
 

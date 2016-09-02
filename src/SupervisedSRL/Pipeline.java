@@ -1,19 +1,12 @@
 package SupervisedSRL;
 
 import SupervisedSRL.Strcutures.ClassifierType;
-import SupervisedSRL.Strcutures.CompactArray;
 import SupervisedSRL.Strcutures.IndexMap;
 import SupervisedSRL.Strcutures.ModelInfo;
-import ml.AveragedPerceptron;
 import ml.Adam;
-import de.bwaldvogel.liblinear.*;
+import ml.AveragedPerceptron;
 
-import java.io.FileInputStream;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.util.HashMap;
-import java.io.File;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Created by monadiab on 5/25/16.
@@ -65,11 +58,6 @@ public class Pipeline {
             case(1):
                 classifierType= ClassifierType.AveragedPerceptron;
                 break;
-            case(2):
-                classifierType = ClassifierType.Liblinear;
-                break;
-            case(3):
-                classifierType = ClassifierType.Adam;
         }
 
         if (!decodeOnly) {
@@ -86,23 +74,7 @@ public class Pipeline {
                             acMaxBeamSize, numOfACFeatures, numOfPDFeatures, modelDir, outputFile, null, ClassifierType.AveragedPerceptron, greedy);
 
                     Evaluation.evaluate(outputFile, devData, indexMap, modelInfo.getClassifier().getReverseLabelMap());
-                } else if (classifierType == ClassifierType.Liblinear) {
-                    modelPaths = Train.trainJointLiblinear(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
-                            numOfACFeatures, numOfPDFeatures);
-                    ModelInfo modelInfo = new ModelInfo(modelPaths[0], modelPaths[1], ClassifierType.Liblinear);
-                    IndexMap indexMap = modelInfo.getIndexMap();
-                    Model classifier = modelInfo.getClassifierLiblinear();
-                    HashMap<Object, Integer>[] featDict = modelInfo.getFeatDict();
-                    HashMap<String, Integer> labelDict = modelInfo.getLabelDict();
-                    String[] labelMap = new String[labelDict.size()];
-                    for (String label : labelDict.keySet())
-                        labelMap[labelDict.get(label)] = label;
-                    Decoder.decode(new Decoder(classifier, "joint"),
-                            indexMap, devData, labelMap,
-                            acMaxBeamSize, numOfACFeatures, numOfPDFeatures, modelDir, outputFile, featDict, ClassifierType.Liblinear, greedy);
-
-                    Evaluation.evaluate(outputFile, devData, indexMap, labelDict);
-                }else if (classifierType == ClassifierType.Adam) {
+                } else if (classifierType == ClassifierType.Adam) {
                     modelPaths = Train.trainJointAdam(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
                             numOfACFeatures, numOfPDFeatures, adamBatchSize, acMaxBeamSize, adamLearningRate,
                             greedy, numOfThreads);
@@ -145,33 +117,7 @@ public class Pipeline {
                     reverseLabelMap.put("0", reverseLabelMap.size());
                     Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
 
-                }else if (classifierType == ClassifierType.Liblinear) {
-                    modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
-                            numOfAIFeatures, numOfACFeatures, numOfPDFeatures, aiMaxBeamSize, acMaxBeamSize, adamBatchSize, adamLearningRate,
-                            ClassifierType.Liblinear, greedy, numOfThreads);
-
-                    ModelInfo aiModelInfo = new ModelInfo(modelPaths[0], modelPaths[1], ClassifierType.Liblinear);
-                    ModelInfo acModelInfo = new ModelInfo(modelPaths[2], modelPaths[3], ClassifierType.Liblinear);
-                    Model aiClassifier = aiModelInfo.getClassifierLiblinear();
-                    IndexMap indexMap= aiModelInfo.getIndexMap();
-                    HashMap<Object, Integer>[] aiFeatDict = aiModelInfo.getFeatDict();
-                    Model acClassifier= acModelInfo.getClassifierLiblinear();
-                    HashMap<Object, Integer>[] acFeatDict = acModelInfo.getFeatDict();
-                    HashMap<String, Integer> acLabelDict = acModelInfo.getLabelDict();
-                    String[] acLabelMap = new String[acLabelDict.size()];
-                    for (String label: acLabelDict.keySet())
-                        acLabelMap[acLabelDict.get(label)]= label;
-
-                    Decoder.decode(new Decoder(aiClassifier, acClassifier),
-                        indexMap, devData, acLabelMap, aiMaxBeamSize, acMaxBeamSize,
-                        numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
-                        modelDir, outputFile, aiFeatDict, acFeatDict, ClassifierType.Liblinear, greedy);
-
-                    HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acLabelDict);
-                    reverseLabelMap.put("0", reverseLabelMap.size());
-                    Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-
-                }else if (classifierType == ClassifierType.Adam)
+                } else if (classifierType == ClassifierType.Adam)
                 {
                     modelPaths = Train.train(trainData, devData, clusterFile, numOfTrainingIterations, modelDir,
                             numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
@@ -211,22 +157,7 @@ public class Pipeline {
                             acMaxBeamSize, numOfACFeatures, numOfPDFeatures, modelDir, outputFile, null, ClassifierType.AveragedPerceptron, greedy);
 
                     Evaluation.evaluate(outputFile, devData, indexMap, classifier.getReverseLabelMap());
-                }else if (classifierType == ClassifierType.Liblinear)
-                {
-                    ModelInfo modelInfo = new ModelInfo(modelDir+"JOINT_ll.model", modelDir+"mappingDicts_ll_JOINT", ClassifierType.Liblinear);
-                    IndexMap indexMap = modelInfo.getIndexMap();
-                    Model classifier = modelInfo.getClassifierLiblinear();
-                    HashMap<Object, Integer>[] featDict = modelInfo.getFeatDict();
-                    HashMap<String, Integer> labelDict = modelInfo.getLabelDict();
-                    String[] labelMap = new String[labelDict.size()];
-                    for (String label: labelDict.keySet())
-                        labelMap[labelDict.get(label)]= label;
-                    Decoder.decode(new Decoder(classifier, "joint"),
-                            indexMap, devData, labelMap,
-                            acMaxBeamSize, numOfACFeatures, numOfPDFeatures, modelDir, outputFile, featDict, ClassifierType.Liblinear, greedy);
-
-                    Evaluation.evaluate(outputFile, devData, indexMap,labelDict);
-                }else if (classifierType == ClassifierType.Adam) {
+                } else if (classifierType == ClassifierType.Adam) {
                     ModelInfo modelInfo = new ModelInfo(modelDir+"JOINT_adam.model", modelDir+"mappingDicts_adam_JOINT", ClassifierType.Adam);
                     IndexMap indexMap = modelInfo.getIndexMap();
                     Adam classifier = modelInfo.getClassifierAdam();
@@ -258,28 +189,7 @@ public class Pipeline {
                     HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acClassifier.getReverseLabelMap());
                     reverseLabelMap.put("0", reverseLabelMap.size());
                     Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-                }else if (classifierType== ClassifierType.Liblinear){
-                    ModelInfo aiModelInfo = new ModelInfo(modelDir + "/AI_ll.model", modelDir+"/mappingDicts_ll_AI", ClassifierType.Liblinear);
-                    ModelInfo acModelInfo = new ModelInfo(modelDir + "/AC_ll.model", modelDir+"/mappingDicts_ll_AC", ClassifierType.Liblinear);
-                    Model aiClassifier = aiModelInfo.getClassifierLiblinear();
-                    IndexMap indexMap= aiModelInfo.getIndexMap();
-                    HashMap<Object, Integer>[] aiFeatDict = aiModelInfo.getFeatDict();
-                    Model acClassifier= acModelInfo.getClassifierLiblinear();
-                    HashMap<Object, Integer>[] acFeatDict = acModelInfo.getFeatDict();
-                    HashMap<String, Integer> acLabelDict = acModelInfo.getLabelDict();
-                    String[] acLabelMap = new String[acLabelDict.size()];
-                    for (String label: acLabelDict.keySet())
-                        acLabelMap[acLabelDict.get(label)]= label;
-
-                    Decoder.decode(new Decoder(aiClassifier, acClassifier),
-                            indexMap, devData, acLabelMap, aiMaxBeamSize, acMaxBeamSize,
-                            numOfAIFeatures, numOfACFeatures, numOfPDFeatures,
-                            modelDir, outputFile, aiFeatDict, acFeatDict, ClassifierType.Liblinear, greedy);
-
-                    HashMap<String, Integer> reverseLabelMap = new HashMap<String, Integer>(acLabelDict);
-                    reverseLabelMap.put("0", reverseLabelMap.size());
-                    Evaluation.evaluate(outputFile, devData, indexMap, reverseLabelMap);
-                }else if (classifierType == ClassifierType.Adam){
+                } else if (classifierType == ClassifierType.Adam) {
                     ModelInfo aiModelInfo = new ModelInfo(modelDir + "/AI_adam.model", modelDir+"/mappingDicts_adam_AI", ClassifierType.Adam);
                     ModelInfo acModelInfo = new ModelInfo(modelDir + "/AC_adam.model", modelDir+"/mappingDicts_adam_AC", ClassifierType.Adam);
                     Adam aiClassifier = aiModelInfo.getClassifierAdam();
