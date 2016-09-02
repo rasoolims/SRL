@@ -1,5 +1,6 @@
 package edu.columbia.cs.nlp.CuraParser.Learning.Updater;
 
+import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.Layers.EmbeddingLayer;
 import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.Layers.FirstHiddenLayer;
 import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.Layers.Layer;
 import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.MLPNetwork;
@@ -47,12 +48,21 @@ public abstract class Updater {
             if (i == 0) {
                 FirstHiddenLayer layer = (FirstHiddenLayer) gradients.get(i);
                 FirstHiddenLayer layerH = (FirstHiddenLayer) gradientHistory.get(i);
+
                 update(layer.getWordEmbeddings().getW(), layerH.getWordEmbeddings().getW(), gradientHistoryVariance == null ? null :
                         ((FirstHiddenLayer) gradientHistoryVariance.get(i)).getWordEmbeddings().getW(), EmbeddingTypes.WORD);
                 update(layer.getPosEmbeddings().getW(), layerH.getPosEmbeddings().getW(), gradientHistoryVariance == null ? null :
                         ((FirstHiddenLayer) gradientHistoryVariance.get(i)).getPosEmbeddings().getW(), EmbeddingTypes.POS);
                 update(layer.getDepEmbeddings().getW(), layerH.getDepEmbeddings().getW(), gradientHistoryVariance == null ? null :
                         ((FirstHiddenLayer) gradientHistoryVariance.get(i)).getDepEmbeddings().getW(), EmbeddingTypes.DEPENDENCY);
+                update(layer.getSubcatEmbeddings().getW(), layerH.getSubcatEmbeddings().getW(), gradientHistoryVariance == null ? null :
+                        ((FirstHiddenLayer) gradientHistoryVariance.get(i)).getSubcatEmbeddings().getW(), EmbeddingTypes.SUBCAT);
+                update(layer.getDepPathEmbeddings().getW(), layerH.getDepPathEmbeddings().getW(), gradientHistoryVariance == null ? null :
+                        ((FirstHiddenLayer) gradientHistoryVariance.get(i)).getDepPathEmbeddings().getW(), EmbeddingTypes.DEPPATH);
+                update(layer.getPosPathEmbeddings().getW(), layerH.getPosPathEmbeddings().getW(), gradientHistoryVariance == null ? null :
+                        ((FirstHiddenLayer) gradientHistoryVariance.get(i)).getPosPathEmbeddings().getW(), EmbeddingTypes.POSPATH);
+                update(layer.getPositionEmbeddings().getW(), layerH.getPositionEmbeddings().getW(), gradientHistoryVariance == null ? null :
+                        ((FirstHiddenLayer) gradientHistoryVariance.get(i)).getPositionEmbeddings().getW(), EmbeddingTypes.POSITION);
             }
         }
         t++;

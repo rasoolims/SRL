@@ -17,6 +17,7 @@ import edu.columbia.cs.nlp.CuraParser.Learning.WeightInit.Initializer;
 import edu.columbia.cs.nlp.CuraParser.Structures.Enums.EmbeddingTypes;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
@@ -165,9 +166,17 @@ public class FirstHiddenLayer extends Layer {
                 embedding = wordEmbeddings;
             else if (j < numWordLayers + numPosLayers)
                 embedding = posEmbeddings;
-            else embedding = depEmbeddings;
+            else if (j < numWordLayers + numPosLayers+ numDepLayers)
+                embedding = depEmbeddings;
+            else if (j < numWordLayers + numPosLayers+ numDepLayers + numSubcatLayers)
+                embedding = subcatEmbeddings;
+            else if (j < numWordLayers + numPosLayers+ numDepLayers + numSubcatLayers + numDepPathLayers)
+                embedding = depPathEmbeddings;
+            else if (j < numWordLayers + numPosLayers+ numDepLayers + numSubcatLayers + numDepPathLayers + numPosPathLayers)
+                embedding = posPathEmbeddings;
+            else embedding = positionEmbeddings;
 
-            if (saved != null && (j >= numWordLayers || wordEmbeddings.isFrequent(j, tok))) {
+            if (saved != null && ((j >= numWordLayers && j<numWordLayers+numDepLayers+numPosLayers) || wordEmbeddings.isFrequent(j, tok))) {
                 int id = tok;
                 if (j < numWordLayers)
                     id = wordEmbeddings.preComputeId(j, tok);
@@ -201,9 +210,17 @@ public class FirstHiddenLayer extends Layer {
                 embedding = wordEmbeddings;
             else if (j < numWordLayers + numPosLayers)
                 embedding = posEmbeddings;
-            else embedding = depEmbeddings;
+            else if (j < numWordLayers + numPosLayers+ numDepLayers)
+                embedding = depEmbeddings;
+            else if (j < numWordLayers + numPosLayers+ numDepLayers + numSubcatLayers)
+                embedding = subcatEmbeddings;
+            else if (j < numWordLayers + numPosLayers+ numDepLayers + numSubcatLayers + numDepPathLayers)
+                embedding = depPathEmbeddings;
+            else if (j < numWordLayers + numPosLayers+ numDepLayers + numSubcatLayers + numDepPathLayers + numPosPathLayers)
+                embedding = posPathEmbeddings;
+            else embedding = positionEmbeddings;
 
-            if (saved != null && (j >= numWordLayers || wordEmbeddings.isFrequent(j, tok))) {
+            if (saved != null && ((j >= numWordLayers && j<numWordLayers+numDepLayers+numPosLayers) || wordEmbeddings.isFrequent(j, tok))) {
                 int id = tok;
                 if (j < numWordLayers)
                     id = wordEmbeddings.preComputeId(j, tok);
@@ -229,8 +246,17 @@ public class FirstHiddenLayer extends Layer {
         final double[][] nextW = network.layer(layerIndex + 1).getW();
         final double[][] curW = network.layer(layerIndex).getW();
         WordEmbeddingLayer netWordEmbeddings = ((FirstHiddenLayer) network.layer(layerIndex)).wordEmbeddings;
+        EmbeddingLayer netSubcatEmbeddings = ((FirstHiddenLayer) network.layer(layerIndex)).subcatEmbeddings;
+        EmbeddingLayer netDepPathEmbeddings = ((FirstHiddenLayer) network.layer(layerIndex)).depPathEmbeddings;
+        EmbeddingLayer netPosPathEmbeddings = ((FirstHiddenLayer) network.layer(layerIndex)).posPathEmbeddings;
+        EmbeddingLayer netPositionEmbeddings = ((FirstHiddenLayer) network.layer(layerIndex)).positionEmbeddings;
+
         int offset = 0;
         double[][] wordEmbeddings = this.wordEmbeddings.getW();
+        double[][] subcatEmbeddings = this.subcatEmbeddings.getW();
+        double[][] depPathEmbeddings = this.depPathEmbeddings.getW();
+        double[][] posPathEmbeddings = this.posPathEmbeddings.getW();
+        double[][] positionEmbeddings = this.positionEmbeddings.getW();
 
         double[] newDelta = activation.gradient(hInput, Utils.dotTranspose(nextW, delta), activations, false);
         assert newDelta.length == w.length;
@@ -257,6 +283,65 @@ public class FirstHiddenLayer extends Layer {
         for (int index = numWordLayers; index < numWordLayers + numPosLayers + numDepLayers; index++) {
             int tok = (int) prevH[index];
             Utils.sumi(savedGradients[index][tok], newDelta);
+            offset += posEmbeddings.dim();
+        }
+
+        for (int index = numWordLayers + numPosLayers; index < numWordLayers + numPosLayers + numDepLayers; index++) {
+            int tok = (int) prevH[index];
+            Utils.sumi(savedGradients[index][tok], newDelta);
+            offset += depEmbeddings.dim();
+        }
+
+
+        for (int index = numWordLayers + numPosLayers + numDepLayers; index <  numWordLayers + numPosLayers + numDepLayers+ numSubcatLayers; index++) {
+            int tok = (int) prevH[index];
+            double[] embeddings = netSubcatEmbeddings.w(tok);
+            for (int h = 0; h < w.length; h++) {
+                for (int k = 0; k < embeddings.length; k++) {
+                    w[h][offset + k] += newDelta[h] * embeddings[k];
+                    subcatEmbeddings[tok][k] += newDelta[h] * curW[h][offset + k];
+                }
+            }
+            offset += netSubcatEmbeddings.dim();
+        }
+
+        for (int index = numWordLayers + numPosLayers + numDepLayers + numSubcatLayers;
+             index <  numWordLayers + numPosLayers + numDepLayers+ numSubcatLayers + numDepPathLayers; index++) {
+            int tok = (int) prevH[index];
+            double[] embeddings = netDepPathEmbeddings.w(tok);
+            for (int h = 0; h < w.length; h++) {
+                for (int k = 0; k < embeddings.length; k++) {
+                    w[h][offset + k] += newDelta[h] * embeddings[k];
+                    depPathEmbeddings[tok][k] += newDelta[h] * curW[h][offset + k];
+                }
+            }
+            offset += netDepPathEmbeddings.dim();
+        }
+
+        for (int index = numWordLayers + numPosLayers + numDepLayers + numSubcatLayers + numDepPathLayers;
+             index <  numWordLayers + numPosLayers + numDepLayers+ numSubcatLayers + numDepPathLayers + numPosPathLayers; index++) {
+            int tok = (int) prevH[index];
+            double[] embeddings = netPosPathEmbeddings.w(tok);
+            for (int h = 0; h < w.length; h++) {
+                for (int k = 0; k < embeddings.length; k++) {
+                    w[h][offset + k] += newDelta[h] * embeddings[k];
+                    posPathEmbeddings[tok][k] += newDelta[h] * curW[h][offset + k];
+                }
+            }
+            offset += netPosPathEmbeddings.dim();
+        }
+
+        for (int index = numWordLayers + numPosLayers + numDepLayers + numSubcatLayers + numDepPathLayers+ numPosPathLayers;
+             index <  numWordLayers + numPosLayers + numDepLayers+ numSubcatLayers + numDepPathLayers + numPosPathLayers+ numPositionLayers; index++) {
+            int tok = (int) prevH[index];
+            double[] embeddings = netPositionEmbeddings.w(tok);
+            for (int h = 0; h < w.length; h++) {
+                for (int k = 0; k < embeddings.length; k++) {
+                    w[h][offset + k] += newDelta[h] * embeddings[k];
+                    positionEmbeddings[tok][k] += newDelta[h] * curW[h][offset + k];
+                }
+            }
+            offset += netPositionEmbeddings.dim();
         }
 
         // does not need to back-propagate anymore.
@@ -285,10 +370,18 @@ public class FirstHiddenLayer extends Layer {
             layer.getWordEmbeddings().setW(deepCopy ? Utils.clone(wordEmbeddings.getW()) : wordEmbeddings.getW());
             layer.getPosEmbeddings().setW(deepCopy ? Utils.clone(posEmbeddings.getW()) : posEmbeddings.getW());
             layer.getDepEmbeddings().setW(deepCopy ? Utils.clone(depEmbeddings.getW()) : depEmbeddings.getW());
+            layer.getDepEmbeddings().setW(deepCopy ? Utils.clone(subcatEmbeddings.getW()) : subcatEmbeddings.getW());
+            layer.getDepEmbeddings().setW(deepCopy ? Utils.clone(depPathEmbeddings.getW()) : depPathEmbeddings.getW());
+            layer.getDepEmbeddings().setW(deepCopy ? Utils.clone(posPathEmbeddings.getW()) : posPathEmbeddings.getW());
+            layer.getDepEmbeddings().setW(deepCopy ? Utils.clone(positionEmbeddings.getW()) : positionEmbeddings.getW());
         } else {
             layer.getWordEmbeddings().setW(new double[wordEmbeddings.nOut()][wordEmbeddings.nIn()]);
             layer.getPosEmbeddings().setW(new double[posEmbeddings.nOut()][posEmbeddings.nIn()]);
             layer.getDepEmbeddings().setW(new double[depEmbeddings.nOut()][depEmbeddings.nIn()]);
+            layer.getWordEmbeddings().setW(new double[subcatEmbeddings.nOut()][subcatEmbeddings.nIn()]);
+            layer.getPosEmbeddings().setW(new double[depPathEmbeddings.nOut()][depPathEmbeddings.nIn()]);
+            layer.getDepEmbeddings().setW(new double[posPathEmbeddings.nOut()][posPathEmbeddings.nIn()]);
+            layer.getDepEmbeddings().setW(new double[positionEmbeddings.nOut()][positionEmbeddings.nIn()]);
         }
         return layer;
     }
@@ -300,6 +393,14 @@ public class FirstHiddenLayer extends Layer {
             posEmbeddings.modifyW(i, j, change);
         else if (type == EmbeddingTypes.DEPENDENCY)
             depEmbeddings.modifyW(i, j, change);
+        else if (type == EmbeddingTypes.SUBCAT)
+            subcatEmbeddings.modifyW(i, j, change);
+        else if (type == EmbeddingTypes.DEPPATH)
+            depPathEmbeddings.modifyW(i, j, change);
+        else if (type == EmbeddingTypes.POSPATH)
+            posPathEmbeddings.modifyW(i, j, change);
+        else if (type == EmbeddingTypes.POSITION)
+            positionEmbeddings.modifyW(i, j, change);
         else if (type == EmbeddingTypes.HIDDENLAYER)
             w[i][j] += change;
         else if (type == EmbeddingTypes.HIDDENLAYERBIAS) {
@@ -321,12 +422,44 @@ public class FirstHiddenLayer extends Layer {
         return depEmbeddings;
     }
 
+    public ArrayList<EmbeddingLayer> embeddingLayers(){
+        ArrayList<EmbeddingLayer> layers = new ArrayList<>();
+        layers.add(wordEmbeddings);
+        layers.add(posEmbeddings);
+        layers.add(depEmbeddings);
+        layers.add(subcatEmbeddings);
+        layers.add(depPathEmbeddings);
+        layers.add(posPathEmbeddings);
+        layers.add(positionEmbeddings);
+        return layers;
+    }
+
+    public EmbeddingLayer getSubcatEmbeddings() {
+        return subcatEmbeddings;
+    }
+
+    public EmbeddingLayer getDepPathEmbeddings() {
+        return depPathEmbeddings;
+    }
+
+    public EmbeddingLayer getPosPathEmbeddings() {
+        return posPathEmbeddings;
+    }
+
+    public EmbeddingLayer getPositionEmbeddings() {
+        return positionEmbeddings;
+    }
+
     @Override
     public void mergeInPlace(Layer anotherLayer) {
         super.mergeInPlace(anotherLayer);
         wordEmbeddings.mergeInPlace(((FirstHiddenLayer) anotherLayer).getWordEmbeddings());
         posEmbeddings.mergeInPlace(((FirstHiddenLayer) anotherLayer).getPosEmbeddings());
         depEmbeddings.mergeInPlace(((FirstHiddenLayer) anotherLayer).getDepEmbeddings());
+        subcatEmbeddings.mergeInPlace(((FirstHiddenLayer) anotherLayer).subcatEmbeddings);
+        depPathEmbeddings.mergeInPlace(((FirstHiddenLayer) anotherLayer).depPathEmbeddings);
+        posPathEmbeddings.mergeInPlace(((FirstHiddenLayer) anotherLayer).posPathEmbeddings);
+        positionEmbeddings.mergeInPlace(((FirstHiddenLayer) anotherLayer).positionEmbeddings);
     }
 
     public void emptyPrecomputedMap() {
@@ -349,5 +482,9 @@ public class FirstHiddenLayer extends Layer {
         wordEmbeddings.setLayer(((FirstHiddenLayer) layer).wordEmbeddings);
         posEmbeddings.setLayer(((FirstHiddenLayer) layer).posEmbeddings);
         depEmbeddings.setLayer(((FirstHiddenLayer) layer).depEmbeddings);
+        subcatEmbeddings.setLayer(((FirstHiddenLayer) layer).subcatEmbeddings);
+        depPathEmbeddings.setLayer(((FirstHiddenLayer) layer).depPathEmbeddings);
+        posPathEmbeddings.setLayer(((FirstHiddenLayer) layer).posPathEmbeddings);
+        positionEmbeddings.setLayer(((FirstHiddenLayer) layer).positionEmbeddings);
     }
 }

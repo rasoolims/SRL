@@ -53,7 +53,9 @@ public class MLPNetwork implements Serializable {
         this.pDim = pDim;
         this.depDim = lDim;
         this.layers = new ArrayList<>();
-        int nIn = numWordLayers * wDim + numPosLayers * pDim + numDepLayers * lDim;
+        int nIn = numWordLayers * wDim + numPosLayers * pDim + numDepLayers * lDim
+                + maps.numSubcatFeatures*subcatDim + maps.numDepPathFeatures*depPathDim
+                + maps.numPosPathFeatures*posPathDim + maps.numPositionFeatures*positionDim;
 
         WeightInit hiddenInit = isRelu(options) ? WeightInit.RELU : WeightInit.UNIFORM;
         WeightInit hiddenBiasInit = isSimpleRelu(options) ? WeightInit.FIX : WeightInit.UNIFORM;

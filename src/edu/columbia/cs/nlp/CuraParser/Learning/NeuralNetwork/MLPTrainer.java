@@ -2,6 +2,7 @@ package edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork;
 
 import edu.columbia.cs.nlp.CuraParser.Accessories.Options;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Utils;
+import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.Layers.EmbeddingLayer;
 import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.Layers.FirstHiddenLayer;
 import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.Layers.Layer;
 import edu.columbia.cs.nlp.CuraParser.Learning.NeuralNetwork.Layers.WordEmbeddingLayer;
@@ -99,32 +100,17 @@ public class MLPTrainer {
             FirstHiddenLayer fLayer = (FirstHiddenLayer) layers.get(0);
             FirstHiddenLayer fGradient = (FirstHiddenLayer) gradients.get(0);
 
-            Layer wLayer = fLayer.getWordEmbeddings();
-            Layer pLayer = fLayer.getPosEmbeddings();
-            Layer dLayer = fLayer.getDepEmbeddings();
+            ArrayList<EmbeddingLayer> flayers = fLayer.embeddingLayers();
+            ArrayList<EmbeddingLayer> glayers = fGradient.embeddingLayers();
+            for(int i=0;i<flayers.size();i++){
+                EmbeddingLayer l = flayers.get(i);
+                EmbeddingLayer gl = glayers.get(i);
 
-            Layer wGrad = fGradient.getWordEmbeddings();
-            Layer pGrad = fGradient.getPosEmbeddings();
-            Layer dGrad = fGradient.getDepEmbeddings();
-
-            for (int d1 = 0; d1 < wLayer.nOut(); d1++) {
-                for (int d2 = 0; d2 < wLayer.nIn(); d2++) {
-                    regCost += Math.pow(wLayer.w(d1, d2), 2);
-                    wGrad.modifyW(d1, d2, regCoef * 2 * wLayer.w(d1, d2));
-                }
-            }
-
-            for (int d1 = 0; d1 < pLayer.nOut(); d1++) {
-                for (int d2 = 0; d2 < pLayer.nIn(); d2++) {
-                    regCost += Math.pow(pLayer.w(d1, d2), 2);
-                    pGrad.modifyW(d1, d2, regCoef * 2 * pLayer.w(d1, d2));
-                }
-            }
-
-            for (int d1 = 0; d1 < dLayer.nOut(); d1++) {
-                for (int d2 = 0; d2 < dLayer.nIn(); d2++) {
-                    regCost += Math.pow(dLayer.w(d1, d2), 2);
-                    dGrad.modifyW(d1, d2, regCoef * 2 * dLayer.w(d1, d2));
+                for (int d1 = 0; d1 < l.nOut(); d1++) {
+                    for (int d2 = 0; d2 < l.nIn(); d2++) {
+                        regCost += Math.pow(l.w(d1, d2), 2);
+                        gl.modifyW(d1, d2, regCoef * 2 * l.w(d1, d2));
+                    }
                 }
             }
 
