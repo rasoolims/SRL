@@ -2,7 +2,7 @@ package SupervisedSRL.Strcutures;
 
 import SupervisedSRL.Features.BaseFeatures;
 import edu.columbia.cs.nlp.CuraParser.Accessories.Utils;
-import edu.columbia.cs.nlp.CuraParser.Structures.NeuralTrainingInstance;
+import edu.columbia.cs.nlp.CuraParser.Structures.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
