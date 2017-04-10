@@ -15,9 +15,8 @@ public class Step1 {
             return;
         System.out.println("\n>>>>>>>>>>>>>\nStep 1 -- building IndexMap\n>>>>>>>>>>>>>\n");
         String trainFilePath = properties.getTrainFile();
-        String clusterFilePath = properties.getClusterFile();
         String indexMapFilePath = properties.getIndexMapFilePath();
-        IndexMap indexMap = new IndexMap(trainFilePath, clusterFilePath);
+        IndexMap indexMap = new IndexMap(trainFilePath);
         IO.write(indexMap, indexMapFilePath);
     }
 }

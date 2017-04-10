@@ -13,16 +13,12 @@ import java.util.TreeSet;
  * Created by Maryam Aminian on 12/9/15.
  */
 public class Sentence {
-
     private int[] depHeads;
     private int[] depLabels;
     private int[] words;
-    private int[] wordFullClusterIds;
     private int[] posTags;
     private int[] cPosTags;
-    private int[] word4ClusterIds;
     private int[] lemmas;
-    private int[] lemmaClusterIds;
     private String[] lemmas_str;
     private TreeSet<Integer>[] reverseDepHeads;
     private PAs predicateArguments;
@@ -58,12 +54,6 @@ public class Sentence {
         lemmas[0] = words[0];
         lemmas_str = new String[numTokens];
         lemmas_str[0] = "ROOT";
-        wordFullClusterIds = new int[numTokens];
-        wordFullClusterIds[0] = IndexMap.ROOTClusterIdx;
-        word4ClusterIds = new int[numTokens];
-        word4ClusterIds[0] = IndexMap.ROOTClusterIdx;
-        lemmaClusterIds = new int[numTokens];
-        lemmaClusterIds[0] = IndexMap.ROOTClusterIdx;
 
         reverseDepHeads = new TreeSet[numTokens];
         predicateArguments = new PAs();
@@ -88,14 +78,11 @@ public class Sentence {
             depHeads[index] = depHead;
 
             words[index] = indexMap.str2int(fields[1]);
-            wordFullClusterIds[index] = indexMap.getFullClusterId(fields[1]);
-            word4ClusterIds[index] = indexMap.get4ClusterId(fields[1]);
             depLabels[index] = indexMap.str2int(fields[11]);
             posTags[index] = indexMap.str2int(fields[5]);
             cPosTags[index] = indexMap.str2int(util.StringUtils.getCoarsePOS(fields[5]));
             lemmas[index] = indexMap.str2int(fields[3]);
             lemmas_str[index] = fields[3];
-            lemmaClusterIds[index] = indexMap.getFullClusterId(fields[3]);
             //projected info from source
             sourcePosTags[index] = indexMap.str2int(fields[12]);
             sourceHeadPosTags[index] = indexMap.str2int(fields[13]);
@@ -274,18 +261,6 @@ public class Sentence {
 
     public int[] getLemmas() {
         return lemmas;
-    }
-
-    public int[] getWordFullClusterIds() {
-        return wordFullClusterIds;
-    }
-
-    public int[] getWord4ClusterIds() {
-        return word4ClusterIds;
-    }
-
-    public int[] getLemmaClusterIds() {
-        return lemmaClusterIds;
     }
 
     public String[] getLemmas_str() {

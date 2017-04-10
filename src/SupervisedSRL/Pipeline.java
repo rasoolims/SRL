@@ -18,10 +18,10 @@ public class Pipeline {
     //predicate cluster features 3
     //argument cluster features 5
 
-    public final static int numOfPIFeatures = 361;
-    public final static int numOfPDFeatures = 361;
-    public final static int numOfAIFeatures = 202;
-    public final static int numOfACFeatures = 202;
+    public final static int numOfPIFeatures = 169;
+    public final static int numOfPDFeatures = 169;
+    public final static int numOfAIFeatures = 179;
+    public final static int numOfACFeatures = 179;
     public final static int numOfGlobalFeatures = 1;
 
     public static void main(String[] args) {
@@ -48,7 +48,7 @@ public class Pipeline {
         String weightedLearning = args[20]; //values: "", "sparse", "dep"
 
 
-        Properties properties = new Properties(trainFile, devFile, testFile, clusterFile, modelDir, outputDir, numOfPartitions,
+        Properties properties = new Properties(trainFile, devFile, testFile, modelDir, outputDir, numOfPartitions,
                 maxNumOfPITrainingIterations, maxNumOfPDTrainingIterations,maxNumOfAITrainingIterations,maxNumOfACTrainingIterations, maxNumOfRerankerTrainingIterations,
                 numOfAIBeamSize, numOfACBeamSize, numOfPIFeatures, numOfPDFeatures, numOfAIFeatures, numOfACFeatures, numOfGlobalFeatures,
                 reranker, steps, modelsToBeTrained, aiCoefficient, pi, supplementOriginalLabels, weightedLearning);

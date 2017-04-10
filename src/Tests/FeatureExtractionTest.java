@@ -311,7 +311,7 @@ public class FeatureExtractionTest {
         writeConllText();
         writeClusterFile();
         int aiFeatLength = Pipeline.numOfAIFeatures;
-        IndexMap map = new IndexMap(tmpFilePath, clusterFilePath);
+        IndexMap map = new IndexMap(tmpFilePath);
         Sentence sentence = new Sentence(conllText, map);
         Object[] feats1 = FeatureExtractor.extractAIFeatures(1, 7, sentence, aiFeatLength, map, false, 0);
         Object[] feats2 = FeatureExtractor.extractAIFeatures(6, 11, sentence, aiFeatLength, map, false, 0);
