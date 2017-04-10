@@ -18,6 +18,7 @@ import java.util.HashMap;
 public class RerankerInstanceGeneratorTest {
 
     final String tmpFilePath = "/tmp/tmp.tmp";
+    final String clusterFilePath = "/tmp/cluster.tmp";
     final String conllText = "1\tThe\tthe\tthe\tDT\tDT\t_\t_\t2\t2\tNMOD\tNMOD\t_\t_\t_\t_\t_\t_\n" +
             "2\teconomy\teconomy\teconomy\tNN\tNN\t_\t_\t4\t4\tNMOD\tNMOD\t_\t_\tA1\t_\t_\t_\n" +
             "3\t's\t's\t's\tPOS\tPOS\t_\t_\t2\t2\tSUFFIX\tSUFFIX\t_\t_\t_\t_\t_\t_\n" +
@@ -60,9 +61,26 @@ public class RerankerInstanceGeneratorTest {
             "14\t,\t,\t,\t,\t,\t_\t_\t7\t7\tP\tP\t_\t_\t_\t_\t_\t_\n" +
             "15\twith\twith\twith\tIN\tIN\t_\t_\t7\t7\tADV\tADV\t_\t_\t_\tAM-ADV\t_\t_\n\n";
 
+    final String clusters = "111101110\tinvented\t11905\n" +
+            "111101110\tinaugurated\t9276\n" +
+            "111101110\tconsecrated\t8603\n" +
+            "111101110\tconceived\t8168\n" +
+            "111101110\tconstituted\t7906\n" +
+            "111101110\tpatented\t5497\n" +
+            "111101110\tdevised\t5143\n" +
+            "111101110\tknighted\t4955\n" +
+            "111101110\tcoined\t2530\n" +
+            "111101110\tplatted\t2241\n" +
+            "111101110\tbaptised\t2093\n" +
+            "111101110\tpopularized\t2026\n" +
+            "111101110\tgazetted\t1877\n" +
+            "111101110\trediscovered\t1817\n" +
+            "111101110\tconsummated\t1505\n";
+
     @Test
     public void testGetPartitions() throws Exception {
         writeConllText();
+        writeClusterFile();
         int numOfPartitions = 2;
         RerankerInstanceGenerator r = new RerankerInstanceGenerator(numOfPartitions);
         ArrayList<String>[] trainParts = r.getPartitions(tmpFilePath);
@@ -111,7 +129,8 @@ public class RerankerInstanceGeneratorTest {
     @Test
     public void testRerankerFeatureVector() throws Exception {
         writeConllText();
-        IndexMap indexMap = new IndexMap(tmpFilePath);
+        writeClusterFile();
+        IndexMap indexMap = new IndexMap(tmpFilePath,clusterFilePath);
         Sentence sentence = new Sentence(IO.readCoNLLFile(tmpFilePath).get(0),indexMap);
         HashMap<String, Integer> globalReverseLabelMap = IO.load("/Users/monadiab/Codes/IdeaProjects/SRL/sample_data/models/AC.model_reverseLabelMap");
         //RerankerFeatureMap rfm=  IO.load("/Users/monadiab/Codes/IdeaProjects/SRL/sample_data/models/reranker.featureMap");
@@ -128,6 +147,12 @@ public class RerankerInstanceGeneratorTest {
     private void writeConllText() throws Exception {
         BufferedWriter writer = new BufferedWriter(new FileWriter(tmpFilePath));
         writer.write(conllText);
+        writer.close();
+    }
+
+    private void writeClusterFile() throws Exception {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(clusterFilePath));
+        writer.write(clusters);
         writer.close();
     }
 }

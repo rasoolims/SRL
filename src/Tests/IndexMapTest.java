@@ -56,7 +56,8 @@ public class IndexMapTest {
     @Test
     public void testMaps() throws Exception {
         writeConllText();
-        IndexMap map = new IndexMap(tmpFilePath);
+        writeClusterFile();
+        IndexMap map = new IndexMap(tmpFilePath, clusterFilePath);
         assert map.str2int("\t") == IndexMap.unknownIdx;
         assert map.str2int(".") < 13;
         assert map.str2int("NMOD") > 12;
@@ -71,6 +72,12 @@ public class IndexMapTest {
     private void writeConllText() throws Exception {
         BufferedWriter writer = new BufferedWriter(new FileWriter(tmpFilePath));
         writer.write(conllText);
+        writer.close();
+    }
+
+    private void writeClusterFile() throws Exception {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(clusterFilePath));
+        writer.write(clusters);
         writer.close();
     }
 }

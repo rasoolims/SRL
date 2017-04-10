@@ -10,6 +10,7 @@ public class Properties {
     private String trainFile;
     private String devFile;
     private String testFile;
+    private String clusterFile;
     private String modelDir;
     private String outputDir;
     private int numOfPartitions;
@@ -53,7 +54,7 @@ public class Properties {
     private String testPILabelsPath;
 
 
-    public Properties(String trainFile, String devFile, String testFile, String modelDir, String outputDir,
+    public Properties(String trainFile, String devFile, String testFile, String clusterFile, String modelDir, String outputDir,
                       int numOfPartitions, int maxNumOfPITrainingIterations, int maxNumOfPDTrainingIterations,int maxNumOfAITrainingIterations,
                       int maxNumOfACTrainingIterations, int maxNumOfRerankerTrainingIterations,
                       int numOfAIBeamSize, int numOfACBeamSize, int numOfPIFeatures, int numOfPDFeatures,
@@ -64,6 +65,7 @@ public class Properties {
         this.trainFile = trainFile;
         this.devFile = devFile;
         this.testFile = testFile;
+        this.clusterFile = clusterFile;
         this.modelDir = modelDir;
         this.outputDir = outputDir;
         this.numOfPartitions = numOfPartitions;
@@ -141,6 +143,10 @@ public class Properties {
 
     public String getTestFile() {
         return testFile;
+    }
+
+    public String getClusterFile() {
+        return clusterFile;
     }
 
     public String getModelDir() {
@@ -351,6 +357,7 @@ public class Properties {
                 "Train File Path : "+ trainFile +"\n" +
                 "Dev File Path: " + devFile +"\n" +
                 "Test File Path: "+ testFile +"\n" +
+                "Cluster File Path: "+ clusterFile+"\n" +
                 "Model Directory: "+ modelDir+"\n" +
                 "Output Directory: "+ outputDir+"\n" +
                 "IndexMap File Path: "+ indexMapFilePath+"\n" +
