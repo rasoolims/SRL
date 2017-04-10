@@ -84,25 +84,29 @@ public class Train {
                 Sentence sentence = new Sentence(trainSentencesInCONLLFormat.get(sID), indexMap);
                 int[] depLabels = sentence.getDepLabels();
                 int[] sourceDepLabels = sentence.getSourceDepLabels();
+                ArrayList<PA> goldPAs = sentence.getPredicateArguments().getPredicateArgumentsAsArray();
+                int[] sentenceWords = sentence.getWords();
 
-                Object[] instances = obtainTrainInstance4AI(sentence, indexMap, numOfAIFeatures,
-                        trainPDAutoLabels[sID]);
-                ArrayList<Pair> featVectors = (ArrayList<Pair>) instances[0];
-                ArrayList<String> labels = (ArrayList<String>) instances[1];
+                for (PA pa : goldPAs) {
+                    int goldPIdx = pa.getPredicate().getIndex();
+                    ArrayList<Argument> goldArgs = pa.getArguments();
 
-                for (int d = 0; d < featVectors.size(); d++) {
-                    int wIdx = (int) featVectors.get(d).second;
-                    Object[] f = (Object[]) featVectors.get(d).first;
-                    double learningWeight = 1;
-                    if (weightedLearning.equals("dep"))
-                        learningWeight = (depLabels[wIdx]== sourceDepLabels[wIdx])?1:0.5;
-                    else if (weightedLearning.equals("sparse"))
-                        learningWeight = sentence.getCompletenessDegree();
+                    for (int wordIdx = 1; wordIdx < sentenceWords.length; wordIdx++) {
+                        String argLabel = getArgLabel(wordIdx, goldArgs);
+                        Object[] f = FeatureExtractor.extractAIFeatures(goldPIdx, wordIdx,
+                                sentence, numOfAIFeatures, indexMap, false, 0); //sentence object must have pd auto labels now
+                        String label = (argLabel.equals("")) ? "0" : "1";
+                        double learningWeight = 1;
+                        if (weightedLearning.equals("dep"))
+                            learningWeight = (depLabels[wordIdx]== sourceDepLabels[wordIdx])?1:0.5;
+                        else if (weightedLearning.equals("sparse"))
+                            learningWeight = sentence.getCompletenessDegree();
 
-                    ap.learnInstance(f, labels.get(d), learningWeight);
-                    if (labels.get(d).equals("0"))
-                        negInstances++;
-                    dataSize++;
+                        ap.learnInstance(f, label, learningWeight);
+                        if (label.equals("0"))
+                            negInstances++;
+                        dataSize++;
+                    }
                 }
                 s++;
                 if (s % 1000 == 0)
@@ -198,21 +202,26 @@ public class Train {
                 Sentence sentence = new Sentence(trainSentencesInCONLLFormat.get(sID), indexMap);
                 int[] depLabels = sentence.getDepLabels();
                 int[] sourceDepLabels = sentence.getSourceDepLabels();
-                Object[] instances = obtainTrainInstance4AC(sentence, indexMap, numOfACFeatures, trainPDAutoLabels[sID]);
                 s++;
-                ArrayList<Pair> featVectors = (ArrayList<Pair>) instances[0];
-                ArrayList<String> labels = (ArrayList<String>) instances[1];
-                for (int d = 0; d < featVectors.size(); d++) {
-                    int wIdx = (int) featVectors.get(d).second;
-                    Object[] f = (Object[]) featVectors.get(d).first;
-                    double learningWeight = 1;
-                    if (weightedLearning.equals("dep"))
-                        learningWeight= (depLabels[wIdx]== sourceDepLabels[wIdx])?1:0.5;
-                    else if (weightedLearning.equals("sparse"))
-                        learningWeight = sentence.getCompletenessDegree();
+                ArrayList<PA> pas = sentence.getPredicateArguments().getPredicateArgumentsAsArray();
+                for (PA pa : pas) {
+                    int pIdx = pa.getPredicate().getIndex();
+                    ArrayList<Argument> currentArgs = pa.getArguments();
+                    //extract features for arguments (not all words)
+                    for (Argument arg : currentArgs) {
+                        int argIdx = arg.getIndex();
+                        String label = arg.getType();
+                        //check if this word is undecided or not?!
+                        Object[] f = FeatureExtractor.extractACFeatures(pIdx, argIdx, sentence, numOfACFeatures, indexMap, false, 0);
+                        double learningWeight = 1;
+                        if (weightedLearning.equals("dep"))
+                            learningWeight= (depLabels[argIdx]== sourceDepLabels[argIdx])?1:0.5;
+                        else if (weightedLearning.equals("sparse"))
+                            learningWeight = sentence.getCompletenessDegree();
 
-                    ap.learnInstance(f, labels.get(d), learningWeight);
-                    dataSize++;
+                        ap.learnInstance(f, label, learningWeight);
+                        dataSize++;
+                    }
                 }
                 if (s % 1000 == 0)
                     System.out.print(s + "...");
@@ -265,56 +274,6 @@ public class Train {
                 IO.write(ap.getReverseLabelMap(), acModelPath + ProjectConstants.GLOBAL_REVERSE_LABEL_MAP);
             System.out.println("Done!");
         }
-    }
-
-
-    public static Object[] obtainTrainInstance4AI(Sentence sentence, IndexMap indexMap, int numOfFeatures,
-                                                  HashMap<Integer, String> pdAutoLabels) throws Exception {
-        ArrayList<Pair> featVectors = new ArrayList<Pair>();
-        ArrayList<String> labels = new ArrayList<>();
-        sentence.setPDAutoLabels(pdAutoLabels); //set pd auto labels
-        ArrayList<PA> goldPAs = sentence.getPredicateArguments().getPredicateArgumentsAsArray();
-        int[] sentenceWords = sentence.getWords();
-
-        for (PA pa : goldPAs) {
-            int goldPIdx = pa.getPredicate().getIndex();
-            ArrayList<Argument> goldArgs = pa.getArguments();
-
-            for (int wordIdx = 1; wordIdx < sentenceWords.length; wordIdx++) {
-                String argLabel = getArgLabel(wordIdx, goldArgs);
-                Object[] featVector = FeatureExtractor.extractAIFeatures(goldPIdx, wordIdx,
-                        sentence, numOfFeatures, indexMap, false, 0); //sentence object must have pd auto labels now
-                String label = (argLabel.equals("")) ? "0" : "1";
-                featVectors.add(new Pair(featVector,wordIdx));
-                labels.add(label);
-            }
-        }
-
-        return new Object[]{featVectors, labels};
-    }
-
-    public static Object[] obtainTrainInstance4AC(Sentence sentence, IndexMap indexMap, int numOfFeatures,
-                                                  HashMap<Integer, String> pdAutoLabels) throws Exception {
-        ArrayList<Pair> featVectors = new ArrayList<Pair>();
-        ArrayList<String> labels = new ArrayList<String>();
-        sentence.setPDAutoLabels(pdAutoLabels); //set pd auto labels
-        ArrayList<PA> pas = sentence.getPredicateArguments().getPredicateArgumentsAsArray();
-
-        for (PA pa : pas) {
-            int pIdx = pa.getPredicate().getIndex();
-            ArrayList<Argument> currentArgs = pa.getArguments();
-            //extract features for arguments (not all words)
-            for (Argument arg : currentArgs) {
-                int argIdx = arg.getIndex();
-                String label = arg.getType();
-                //check if this word is undecided or not?!
-                Object[] featVector = FeatureExtractor.extractACFeatures(pIdx, argIdx, sentence, numOfFeatures, indexMap, false, 0);
-                featVectors.add(new Pair(featVector, argIdx));
-                labels.add(label);
-            }
-        }
-
-        return new Object[]{featVectors, labels};
     }
 
     /////////////////////////////////////////////////////////////////////////////
